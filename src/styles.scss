@@ -1,3 +1,127 @@
-/* You can add global styles to this file, and also import other style files */
+/* Stili globali ottimizzati per mobile */
 
-/* Sostituiremo con CDN per ora */
+:root {
+  --primary-color: #198754;
+  --primary-light: #20c997;
+  --primary-dark: #157347;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #fd7e14;
+  --info-color: #17a2b8;
+  --light-color: #f8fffe;
+  --light-green: #e8f5e8;
+  --medium-green: #d4edda;
+  --dark-color: #212529;
+  --border-radius: 16px;
+  --box-shadow: 0 4px 20px rgba(25, 135, 84, 0.15);
+  --accent-green: #40c463;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, var(--light-color) 0%, var(--light-green) 100%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none; /* Previene il bounce su iOS */
+}
+
+/* Ottimizzazioni per touch */
+.btn {
+  min-height: 48px; /* Touch target minimo per accessibilità */
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  transition: all 0.2s ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* Card ottimizzate per mobile */
+.card {
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  border: none;
+  margin-bottom: 1rem;
+}
+
+.card-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: white;
+  border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+  border: none;
+  padding: 1.25rem;
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+}
+
+/* Form controls ottimizzati per mobile */
+.form-control, .form-select {
+  min-height: 48px;
+  border-radius: var(--border-radius);
+  border: 2px solid #e9ecef;
+  font-size: 16px; /* Previene zoom su iOS */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+/* Miglioramenti per layout mobile */
+.container {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Animazioni fluide */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Ottimizzazioni per PWA */
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Responsive breakpoints */
+@media (max-width: 576px) {
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .card {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+}
+
+/* Miglioramenti per dark mode (se supportato dal device) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --light-color: #212529;
+    --dark-color: #f8f9fa;
+  }
+}

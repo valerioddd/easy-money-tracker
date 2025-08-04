@@ -1,9 +1,15 @@
 {
-  "name": "easy-money-tracker",
-  "short_name": "easy-money-tracker",
+  "name": "Valerio please track my money",
+  "short_name": "TrackMyMoney",
+  "description": "App personalizzata per Valerio per tracciare le spese quotidiane",
   "display": "standalone",
+  "orientation": "portrait",
   "scope": "./",
   "start_url": "./",
+  "theme_color": "#198754",
+  "background_color": "#ffffff",
+  "categories": ["finance", "productivity"],
+  "lang": "it",
   "icons": [
     {
       "src": "icons/icon-72x72.png",

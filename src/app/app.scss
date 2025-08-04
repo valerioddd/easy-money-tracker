@@ -1,0 +1,41 @@
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.app-header {
+  background: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 3px solid var(--primary-color);
+}
+
+.app-main {
+  flex: 1;
+  padding: 1rem 0;
+  min-height: calc(100vh - 80px);
+}
+
+/* Stile per l'icona del wallet */
+.fa-wallet {
+  background: linear-gradient(135deg, var(--primary-color), #20c997);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Responsive per tablet */
+@media (min-width: 768px) {
+  .app-main {
+    padding: 2rem 0;
+  }
+  
+  .container {
+    max-width: 600px;
+  }
+}
