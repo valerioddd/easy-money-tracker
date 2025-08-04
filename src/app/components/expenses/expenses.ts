@@ -143,7 +143,9 @@ import { User } from '@angular/fire/auth';
                   </div>
                   <div class="expense-meta">
                     <div class="expense-category">
-                      <span class="category-badge" [style.color]="getCategoryColor(expense.category)">
+                      <span class="category-badge" 
+                            [style.color]="getCategoryColor(expense.category)"
+                            [style.background-color]="getCategoryBackgroundColor(expense.category)">
                         <i [class]="getCategoryIcon(expense.category)" class="me-1"></i>{{ expense.category }}
                       </span>
                     </div>
@@ -288,12 +290,14 @@ import { User } from '@angular/fire/auth';
     
     .expense-category .category-badge {
       display: inline-block;
-      background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-      color: white;
-      padding: 0.1rem 0.5rem;
-      border-radius: 10px;
-      font-size: 0.7rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 15px;
+      font-size: 0.75rem;
       font-weight: 600;
+      border: 1px solid currentColor;
+      transition: all 0.2s ease;
+      text-align: center;
+      white-space: nowrap;
     }
     
     .expense-date {
@@ -500,6 +504,24 @@ export class ExpensesComponent implements OnInit {
   getCategoryColor(category: string): string {
     const categoryObj = this.categories.find(cat => cat.name === category);
     return categoryObj?.color || '#6c757d';
+  }
+
+  getCategoryBackgroundColor(category: string): string {
+    const categoryObj = this.categories.find(cat => cat.name === category);
+    const color = categoryObj?.color || '#6c757d';
+    
+    // Converto il colore hex in RGB e aggiungo opacità
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    };
+    
+    const rgb = hexToRgb(color);
+    return rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)` : 'rgba(108, 117, 125, 0.15)';
   }
 
   formatDate(dateString: string): string {
