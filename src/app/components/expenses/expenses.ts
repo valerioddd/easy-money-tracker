@@ -15,11 +15,7 @@ import { User } from '@angular/fire/auth';
       <div class="row">
         <div class="col-12">
           
-          <div *ngIf="!(user$ | async)" class="alert alert-warning rounded-4">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            Devi essere loggato per usare questa funzione
-          </div>
-
+          <!-- Content only shows when user is logged in -->
           <div *ngIf="user$ | async" class="expense-card">
             <div class="card-header">
               <div class="d-flex align-items-center">
@@ -421,11 +417,7 @@ export class ExpensesComponent implements OnInit {
 
   ngOnInit() {
     // Load expenses when component initializes
-    this.user$.subscribe(user => {
-      if (user) {
-        this.loadExpenses();
-      }
-    });
+    this.loadExpenses();
   }
 
   async addExpense() {
