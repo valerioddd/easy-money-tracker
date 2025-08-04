@@ -109,16 +109,11 @@ import { User } from '@angular/fire/auth';
           </div>
 
           <!-- Lista Spese -->
-          <div *ngIf="user$ | async" class="expenses-list mt-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5 class="text-success fw-bold mb-0">
-                <i class="fas fa-list me-2"></i>Spese Salvate
+          <div *ngIf="user$ | async" class="expenses-list mt-3">
+            <div class="expenses-header mb-2">
+              <h5 class="text-success fw-bold mb-0 d-flex align-items-center">
+                <i class="fas fa-list me-2"></i>Spese
               </h5>
-              <button 
-                class="btn btn-outline-success btn-sm"
-                (click)="loadExpenses()">
-                <i class="fas fa-sync-alt me-1"></i> Ricarica
-              </button>
             </div>
 
             <div *ngIf="expenses.length === 0" class="empty-state">
@@ -132,16 +127,36 @@ import { User } from '@angular/fire/auth';
             <div class="expenses-grid">
               <div *ngFor="let expense of expenses; trackBy: trackByExpenseId" class="expense-item">
                 <div class="expense-content">
-                  <div class="expense-amount">
-                    €{{ expense.amount | number:'1.2-2' }}
+                  <!-- Mobile: Amount and Delete button on top row -->
+                  <div class="expense-header">
+                    <div class="expense-amount">
+                      €{{ expense.amount | number:'1.2-2' }}
+                    </div>
+                    <div class="expense-actions">
+                      <button 
+                        class="btn btn-outline-danger btn-sm"
+                        (click)="deleteExpense(expense.id!)"
+                        title="Elimina spesa">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
                   </div>
+                  
+                  <!-- Description always visible -->
                   <div class="expense-description">
-                    <span *ngIf="expense.description; else noDescription">{{ expense.description }}</span>
+                    <span *ngIf="expense.description && expense.description.trim(); else noDescription">
+                      {{ expense.description }}
+                    </span>
                     <ng-template #noDescription>
-                      <span class="text-muted">Nessuna descrizione</span>
+                      <span class="text-muted fst-italic">Nessuna descrizione</span>
                     </ng-template>
                   </div>
-                  <div class="expense-meta">
+                  
+                  <!-- Bottom row: Date and Category -->
+                  <div class="expense-footer">
+                    <div class="expense-date">
+                      <i class="fas fa-calendar me-1"></i>{{ formatDate(expense.date) }}
+                    </div>
                     <div class="expense-category">
                       <span class="category-badge" 
                             [style.color]="getCategoryColor(expense.category)"
@@ -149,19 +164,19 @@ import { User } from '@angular/fire/auth';
                         <i [class]="getCategoryIcon(expense.category)" class="me-1"></i>{{ expense.category }}
                       </span>
                     </div>
-                    <div class="expense-date">
-                      <i class="fas fa-calendar me-1"></i>{{ formatDate(expense.date) }}
-                    </div>
-                  </div>
-                  <div class="expense-actions">
-                    <button 
-                      class="btn btn-outline-danger btn-sm"
-                      (click)="deleteExpense(expense.id!)"
-                      title="Elimina spesa">
-                      <i class="fas fa-trash"></i>
-                    </button>
                   </div>
                 </div>
+              </div>
+            </div>
+            
+            <!-- Reload button at bottom right -->
+            <div *ngIf="expenses.length > 0" class="expenses-footer mt-2">
+              <div class="d-flex justify-content-end">
+                <button 
+                  class="btn btn-outline-success btn-sm"
+                  (click)="loadExpenses()">
+                  <i class="fas fa-sync-alt me-1"></i> Ricarica
+                </button>
               </div>
             </div>
           </div>
@@ -180,18 +195,18 @@ import { User } from '@angular/fire/auth';
       border-radius: var(--border-radius);
       box-shadow: var(--box-shadow);
       overflow: hidden;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
     
     .card-header {
       background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
       color: white;
-      padding: 1.5rem;
+      padding: 1rem;
       border: none;
     }
     
     .card-body {
-      padding: 2rem;
+      padding: 1.5rem;
     }
     
     .form-floating > .form-control,
@@ -232,7 +247,20 @@ import { User } from '@angular/fire/auth';
     .expenses-grid {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.25rem;
+    }
+    
+    .expenses-header h5 {
+      font-size: 1.1rem;
+    }
+    
+    .expenses-header h5 i {
+      font-size: 1rem;
+      vertical-align: middle;
+    }
+    
+    .expenses-footer {
+      padding-top: 0.5rem;
     }
     
     .expense-item {
@@ -250,49 +278,63 @@ import { User } from '@angular/fire/auth';
     }
     
     .expense-content {
+      padding: 0.75rem;
+    }
+    
+    .expense-header {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      padding: 0.75rem 1rem;
-      gap: 1rem;
+      margin-bottom: 0.5rem;
     }
     
     .expense-amount {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 700;
       color: var(--primary-color);
       background: var(--light-green);
-      padding: 0.25rem 0.75rem;
-      border-radius: 8px;
-      min-width: 80px;
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      min-width: 70px;
       text-align: center;
       white-space: nowrap;
       flex-shrink: 0;
     }
     
     .expense-description {
-      flex: 1;
-      min-width: 0;
       color: var(--dark-color);
       font-weight: 500;
       font-size: 0.9rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      line-height: 1.3;
+      margin-bottom: 0.5rem;
+      min-height: 1.2rem; /* Ensures space even when empty */
+      padding: 0.15rem 0;
+      border-left: 3px solid transparent;
     }
     
-    .expense-meta {
+    .expense-description span:not(.text-muted) {
+      font-weight: 600;
+      color: var(--bs-dark);
+    }
+    
+    .expense-footer {
       display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 0.25rem;
-      flex-shrink: 0;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .expense-date {
+      color: var(--secondary-color);
+      font-size: 0.75rem;
+      font-weight: 500;
+      white-space: nowrap;
     }
     
     .expense-category .category-badge {
       display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 15px;
-      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.7rem;
       font-weight: 600;
       border: 1px solid currentColor;
       transition: all 0.2s ease;
@@ -300,35 +342,50 @@ import { User } from '@angular/fire/auth';
       white-space: nowrap;
     }
     
-    .expense-date {
-      color: var(--secondary-color);
-      font-size: 0.7rem;
-      white-space: nowrap;
-    }
-    
     .expense-actions {
       display: flex;
-      gap: 0.25rem;
+      gap: 0.1rem;
       flex-shrink: 0;
-      margin-left: 0.5rem;
     }
     
     .btn-outline-danger {
-      border-radius: 6px;
+      border: none;
+      background: rgba(220, 53, 69, 0.1);
+      color: #dc3545;
+      border-radius: 4px;
       transition: all 0.2s ease;
-      padding: 0.375rem 0.5rem;
-      font-size: 0.8rem;
+      padding: 0.25rem 0.4rem;
+      font-size: 0.75rem;
+    }
+    
+    .btn-outline-danger:hover {
+      background: rgba(220, 53, 69, 0.2);
+      color: #dc3545;
+      transform: scale(1.05);
+    }
+    
+    .btn-outline-danger:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
     }
     
     .btn-outline-success {
-      border-radius: 8px;
-      border-color: var(--primary-color);
+      border: none;
+      background: rgba(25, 135, 84, 0.1);
       color: var(--primary-color);
+      border-radius: 8px;
+      transition: all 0.2s ease;
     }
     
     .btn-outline-success:hover {
-      background: var(--primary-color);
-      border-color: var(--primary-color);
+      background: rgba(25, 135, 84, 0.2);
+      color: var(--primary-color);
+      transform: translateY(-1px);
+    }
+    
+    .btn-outline-success:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.25);
     }
     
     .empty-state {
@@ -357,44 +414,59 @@ import { User } from '@angular/fire/auth';
     /* Responsive */
     @media (max-width: 576px) {
       .card-body {
-        padding: 1.5rem;
+        padding: 1rem;
       }
       
       .expense-content {
-        padding: 0.6rem 0.75rem;
-        gap: 0.75rem;
+        padding: 0.6rem;
+      }
+      
+      .expense-header {
+        margin-bottom: 0.4rem;
       }
       
       .expense-amount {
         font-size: 1rem;
-        min-width: 70px;
-        padding: 0.2rem 0.5rem;
+        background: none;
+        padding: 0;
+        color: var(--primary-color);
+        text-align: left;
+        min-width: auto;
       }
       
       .expense-description {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
+        min-height: 1.1rem;
+        padding: 0.2rem 0;
+        font-weight: 500;
       }
       
-      .expense-meta {
-        gap: 0.2rem;
+      .expense-description span:not(.text-muted) {
+        font-weight: 600;
+        color: var(--bs-dark);
+      }
+      
+      .expense-date {
+        font-size: 0.7rem;
       }
       
       .expense-category .category-badge {
         font-size: 0.65rem;
-        padding: 0.08rem 0.4rem;
-      }
-      
-      .expense-date {
-        font-size: 0.65rem;
-      }
-      
-      .expense-actions {
-        margin-left: 0.25rem;
+        padding: 0.15rem 0.5rem;
       }
       
       .btn-outline-danger {
-        padding: 0.25rem 0.4rem;
-        font-size: 0.75rem;
+        border: none;
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        padding: 0.2rem 0.35rem;
+        font-size: 0.7rem;
+      }
+      
+      .btn-outline-danger:hover {
+        background: rgba(220, 53, 69, 0.2);
+        transform: scale(1.05);
       }
     }
   `]
@@ -468,6 +540,13 @@ export class ExpensesComponent implements OnInit {
   async loadExpenses() {
     try {
       this.expenses = await this.googleSheetsService.getExpenses();
+      
+      // Debug: verifica se le descrizioni sono presenti
+      console.log('Loaded expenses:', this.expenses);
+      this.expenses.forEach((expense, index) => {
+        console.log(`Expense ${index}: description = "${expense.description}"`);
+      });
+      
     } catch (error) {
       this.message = 'Errore durante il caricamento delle spese: ' + error;
       this.messageType = 'error';

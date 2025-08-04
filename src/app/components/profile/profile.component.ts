@@ -111,7 +111,7 @@ import { User } from '@angular/fire/auth';
           <div class="expense-card">
             <div class="card-body text-center">
               <button 
-                class="btn btn-danger btn-lg w-100"
+                class="btn btn-outline-danger w-100"
                 (click)="signOut()">
                 <i class="fas fa-sign-out-alt me-2"></i>
                 Logout
@@ -217,6 +217,83 @@ import { User } from '@angular/fire/auth';
       font-size: 0.85rem;
       color: var(--bs-secondary);
       line-height: 1.3;
+    }
+    
+    .btn-outline-primary {
+      border: none;
+      background-color: rgba(13, 110, 253, 0.1);
+      color: var(--bs-primary);
+      padding: 4px 6px;
+      font-size: 1rem;
+      min-width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .btn-outline-primary:hover,
+    .btn-outline-primary:focus {
+      background-color: rgba(13, 110, 253, 0.2);
+      color: var(--bs-primary);
+      border: none;
+      box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .btn-outline-warning {
+      border: none;
+      background-color: rgba(255, 193, 7, 0.1);
+      color: var(--bs-warning);
+      padding: 4px 6px;
+      font-size: 1rem;
+      min-width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .btn-outline-warning:hover,
+    .btn-outline-warning:focus {
+      background-color: rgba(255, 193, 7, 0.2);
+      color: var(--bs-warning);
+      border: none;
+      box-shadow: 0 0 0 0.15rem rgba(255, 193, 7, 0.25);
+    }
+    
+    .btn-outline-info {
+      border: none;
+      background-color: rgba(23, 162, 184, 0.1);
+      color: var(--bs-info);
+      padding: 4px 6px;
+      font-size: 1rem;
+      min-width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .btn-outline-info:hover,
+    .btn-outline-info:focus {
+      background-color: rgba(23, 162, 184, 0.2);
+      color: var(--bs-info);
+      border: none;
+      box-shadow: 0 0 0 0.15rem rgba(23, 162, 184, 0.25);
+    }
+    
+    .btn-outline-danger {
+      border: none;
+      background-color: rgba(220, 53, 69, 0.1);
+      color: var(--bs-danger);
+    }
+    
+    .btn-outline-danger:hover,
+    .btn-outline-danger:focus {
+      background-color: rgba(220, 53, 69, 0.2);
+      color: var(--bs-danger);
+      border: none;
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
     }
     
     @media (max-width: 576px) {

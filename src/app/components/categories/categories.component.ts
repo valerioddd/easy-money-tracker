@@ -287,17 +287,84 @@ import { CategoriesService, Category } from '../../services/categories.service';
     
     .category-actions {
       display: flex;
-      gap: 8px;
+      gap: 4px;
+      align-items: center;
+    }
+    
+    .category-actions .btn {
+      padding: 4px 6px;
+      font-size: 1rem;
+      min-width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .default-category {
       background-color: rgba(40, 167, 69, 0.05);
     }
     
+    .btn-outline-primary {
+      border: none;
+      background-color: rgba(13, 110, 253, 0.1);
+      color: var(--bs-primary);
+      padding: 4px 6px;
+      font-size: 1rem;
+      min-width: 28px;
+      height: 28px;
+    }
+    
+    .btn-outline-primary:hover,
+    .btn-outline-primary:focus {
+      background-color: rgba(13, 110, 253, 0.2);
+      color: var(--bs-primary);
+      border: none;
+      box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .btn-outline-warning {
+      border: none;
+      background-color: rgba(255, 193, 7, 0.1);
+      color: var(--bs-warning);
+      padding: 4px 6px;
+      font-size: 1rem;
+      min-width: 28px;
+      height: 28px;
+    }
+    
+    .btn-outline-warning:hover,
+    .btn-outline-warning:focus {
+      background-color: rgba(255, 193, 7, 0.2);
+      color: var(--bs-warning);
+      border: none;
+      box-shadow: 0 0 0 0.15rem rgba(255, 193, 7, 0.25);
+    }
+    
+    .btn-outline-danger {
+      border: none;
+      background-color: rgba(220, 53, 69, 0.1);
+      color: var(--bs-danger);
+      padding: 4px 6px;
+      font-size: 1rem;
+      min-width: 28px;
+      height: 28px;
+    }
+    
+    .btn-outline-danger:hover,
+    .btn-outline-danger:focus {
+      background-color: rgba(220, 53, 69, 0.2);
+      color: var(--bs-danger);
+      border: none;
+      box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, 0.25);
+    }
+    
     @media (max-width: 768px) {
       .category-actions .btn {
-        padding: 4px 8px;
-        font-size: 0.8rem;
+        padding: 3px 5px;
+        font-size: 0.9rem;
+        min-width: 26px;
+        height: 26px;
       }
       
       .category-icon {
