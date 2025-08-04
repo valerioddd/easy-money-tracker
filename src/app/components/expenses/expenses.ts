@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GoogleSheetsModernService, Expense } from '../../services/google-sheets-modern.service';
+import { CategoriesService, Category } from '../../services/categories.service';
 import { AuthService } from '../../services/auth.service';
 import { Observable } from 'rxjs';
 import { User } from '@angular/fire/auth';
@@ -11,7 +12,7 @@ import { User } from '@angular/fire/auth';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="container">
+    <div class="container-fluid">
       <div class="row">
         <div class="col-12">
           
@@ -68,13 +69,11 @@ import { User } from '@angular/fire/auth';
                     name="category"
                     required>
                     <option value="">Seleziona categoria</option>
-                    <option value="Alimentari">🛒 Alimentari</option>
-                    <option value="Trasporti">🚗 Trasporti</option>
-                    <option value="Intrattenimento">🎬 Intrattenimento</option>
-                    <option value="Bollette">📄 Bollette</option>
-                    <option value="Vestiti">👕 Vestiti</option>
-                    <option value="Salute">🏥 Salute</option>
-                    <option value="Altro">📦 Altro</option>
+                    <option 
+                      *ngFor="let category of categories" 
+                      [value]="category.name">
+                      <i [class]="category.icon"></i> {{ category.name }}
+                    </option>
                   </select>
                   <label for="category">
                     <i class="fas fa-tags me-2"></i>Categoria
@@ -144,7 +143,9 @@ import { User } from '@angular/fire/auth';
                   </div>
                   <div class="expense-meta">
                     <div class="expense-category">
-                      <span class="category-badge">{{ getCategoryIcon(expense.category) }} {{ expense.category }}</span>
+                      <span class="category-badge" [style.color]="getCategoryColor(expense.category)">
+                        <i [class]="getCategoryIcon(expense.category)" class="me-1"></i>{{ expense.category }}
+                      </span>
                     </div>
                     <div class="expense-date">
                       <i class="fas fa-calendar me-1"></i>{{ formatDate(expense.date) }}
@@ -397,6 +398,7 @@ import { User } from '@angular/fire/auth';
 export class ExpensesComponent implements OnInit {
   user$: Observable<User | null>;
   expenses: Expense[] = [];
+  categories: Category[] = [];
   isLoading = false;
   message = '';
   messageType: 'success' | 'error' = 'success';
@@ -410,6 +412,7 @@ export class ExpensesComponent implements OnInit {
 
   constructor(
     private googleSheetsService: GoogleSheetsModernService,
+    private categoriesService: CategoriesService,
     private authService: AuthService
   ) {
     this.user$ = this.authService.user$;
@@ -418,6 +421,13 @@ export class ExpensesComponent implements OnInit {
   ngOnInit() {
     // Load expenses when component initializes
     this.loadExpenses();
+    this.loadCategories();
+  }
+
+  loadCategories() {
+    this.categoriesService.getCategories().subscribe(categories => {
+      this.categories = categories;
+    });
   }
 
   async addExpense() {
@@ -428,6 +438,9 @@ export class ExpensesComponent implements OnInit {
       await this.googleSheetsService.addExpense(this.newExpense);
       this.message = 'Spesa aggiunta con successo!';
       this.messageType = 'success';
+      
+      // Update statistics
+      this.updateStats();
       
       // Reset form
       this.newExpense = {
@@ -480,16 +493,13 @@ export class ExpensesComponent implements OnInit {
   }
 
   getCategoryIcon(category: string): string {
-    const icons: { [key: string]: string } = {
-      'Alimentari': '🛒',
-      'Trasporti': '🚗',
-      'Intrattenimento': '🎬',
-      'Bollette': '📄',
-      'Vestiti': '👕',
-      'Salute': '🏥',
-      'Altro': '📦'
-    };
-    return icons[category] || '📦';
+    const categoryObj = this.categories.find(cat => cat.name === category);
+    return categoryObj?.icon || 'fas fa-question';
+  }
+
+  getCategoryColor(category: string): string {
+    const categoryObj = this.categories.find(cat => cat.name === category);
+    return categoryObj?.color || '#6c757d';
   }
 
   formatDate(dateString: string): string {
@@ -499,5 +509,13 @@ export class ExpensesComponent implements OnInit {
       month: '2-digit',
       year: 'numeric'
     });
+  }
+
+  updateStats() {
+    const stats = JSON.parse(localStorage.getItem('expenseStats') || '{"totalExpenses": 0, "totalAmount": 0, "lastExpense": null}');
+    stats.totalExpenses += 1;
+    stats.totalAmount += Number(this.newExpense.amount);
+    stats.lastExpense = new Date().toISOString().split('T')[0];
+    localStorage.setItem('expenseStats', JSON.stringify(stats));
   }
 }

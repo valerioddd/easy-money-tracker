@@ -125,3 +125,46 @@ body {
     --dark-color: #f8f9fa;
   }
 }
+
+/* Fix per layout responsive e container */
+.container-fluid {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+@media (min-width: 576px) {
+  .container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .container-fluid {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .container-fluid {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Fix per l'overflow del menu */
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+/* Miglioramenti per l'header mobile */
+@media (max-width: 575px) {
+  .app-header h3, .app-header h4 {
+    font-size: 1.1rem;
+  }
+  
+  .fa-wallet {
+    font-size: 1.3rem !important;
+  }
+}

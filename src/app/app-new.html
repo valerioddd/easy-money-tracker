@@ -1,0 +1,92 @@
+<div class="app-container">
+  <!-- Header mobile con logo, titolo e menu burger -->
+  <header class="app-header">
+    <div class="container-fluid px-3">
+      <div class="d-flex justify-content-between align-items-center py-3">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-wallet text-success me-2" style="font-size: 1.5rem;"></i>
+          <h3 class="mb-0 text-success fw-bold d-none d-sm-block">Valerio, please track my money!</h3>
+          <h4 class="mb-0 text-success fw-bold d-block d-sm-none">TrackMyMoney</h4>
+        </div>
+        
+        <!-- Menu burger button -->
+        <button 
+          class="btn btn-outline-success" 
+          type="button" 
+          (click)="toggleSidebar()"
+          [attr.aria-expanded]="sidebarOpen">
+          <i class="fas" [class.fa-bars]="!sidebarOpen" [class.fa-times]="sidebarOpen"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-content">
+    <!-- Sidebar -->
+    <nav class="sidebar" [class.show]="sidebarOpen">
+      <div class="sidebar-header">
+        <h5 class="text-success fw-bold mb-0">
+          <i class="fas fa-cog me-2"></i>
+          Menu
+        </h5>
+        <button 
+          class="btn btn-sm btn-outline-success d-lg-none" 
+          (click)="toggleSidebar()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="sidebar-body">
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link" 
+               routerLink="/expenses" 
+               routerLinkActive="active"
+               (click)="closeSidebarOnMobile()">
+              <i class="fas fa-receipt me-2"></i>
+              Le Mie Spese
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" 
+               routerLink="/categories" 
+               routerLinkActive="active"
+               (click)="closeSidebarOnMobile()">
+              <i class="fas fa-tags me-2"></i>
+              Gestione Categorie
+            </a>
+          </li>
+          <li class="nav-item">
+            <div class="nav-link" *ngIf="user$ | async as user">
+              <div class="user-info">
+                <img [src]="user.photoURL" 
+                     [alt]="user.displayName" 
+                     class="user-avatar me-2">
+                <div class="user-details">
+                  <div class="user-name">{{ user.displayName }}</div>
+                  <div class="user-email">{{ user.email }}</div>
+                </div>
+              </div>
+              <button 
+                class="btn btn-sm btn-outline-danger mt-2 w-100"
+                (click)="signOut()">
+                <i class="fas fa-sign-out-alt me-1"></i>
+                Logout
+              </button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Overlay per mobile -->
+    <div class="sidebar-overlay" 
+         [class.show]="sidebarOpen" 
+         (click)="closeSidebar()"></div>
+
+    <!-- Contenuto principale -->
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

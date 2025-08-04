@@ -10,14 +10,118 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 1020;
   border-bottom: 3px solid var(--primary-color);
 }
 
-.app-main {
+.app-content {
+  display: flex;
   flex: 1;
-  padding: 1rem 0;
-  min-height: calc(100vh - 80px);
+  position: relative;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  padding-bottom: 100px; /* Space for bottom nav */
+  min-height: calc(100vh - 80px - 70px); /* Header + bottom nav height */
+  width: 100%;
+  overflow-y: auto;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 2px solid var(--primary-color);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1030;
+  padding: 0.5rem 0;
+}
+
+.bottom-nav-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.nav-tab {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  color: var(--bs-secondary);
+  transition: all 0.3s ease;
+  padding: 0.5rem;
+  border-radius: 12px;
+  margin: 0 0.25rem;
+}
+
+.nav-tab:hover {
+  color: var(--primary-color);
+  text-decoration: none;
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.nav-tab.active {
+  color: var(--primary-color);
+  background-color: rgba(40, 167, 69, 0.15);
+  font-weight: 600;
+}
+
+.nav-tab-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.nav-tab-content i {
+  font-size: 1.2rem;
+  transition: transform 0.2s ease;
+}
+
+.nav-tab-content span {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.nav-tab.active .nav-tab-content i {
+  transform: scale(1.1);
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .main-content {
+    padding: 2rem;
+    padding-bottom: 100px;
+  }
+  
+  .nav-tab-content span {
+    font-size: 0.8rem;
+  }
+  
+  .nav-tab-content i {
+    font-size: 1.3rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .bottom-nav-container {
+    max-width: 600px;
+  }
+  
+  .nav-tab {
+    padding: 0.75rem;
+  }
 }
 
 /* Stile per l'icona del wallet */
@@ -29,13 +133,26 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
-/* Responsive per tablet */
-@media (min-width: 768px) {
-  .app-main {
-    padding: 2rem 0;
+/* Safe area per dispositivi con notch */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .bottom-nav {
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
   }
   
-  .container {
-    max-width: 600px;
+  .main-content {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Miglioramenti per accessibilità */
+.nav-tab:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-tab,
+  .nav-tab-content i {
+    transition: none;
   }
 }
