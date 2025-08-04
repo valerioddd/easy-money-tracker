@@ -67,7 +67,7 @@ import { User } from '@angular/fire/auth';
             
             <div class="action-buttons">
               <a 
-                routerLink="/test" 
+                routerLink="/expenses" 
                 class="btn btn-success btn-lg w-100 mb-3">
                 <i class="fas fa-plus-circle me-2"></i>
                 Inizia a tracciare le spese
