@@ -19,10 +19,10 @@ import { CategoriesService, Category } from '../../services/categories.service';
               <h2 class="mb-0 text-success">Gestione Categorie</h2>
             </div>
             <button 
-              class="btn btn-success btn-sm"
+              class="btn btn-outline-success btn-sm"
               (click)="showAddForm = !showAddForm">
               <i class="fas fa-plus me-1"></i>
-              Nuova Categoria
+              Aggiungi
             </button>
           </div>
 
@@ -135,15 +135,8 @@ import { CategoriesService, Category } from '../../services/categories.service';
               <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                   <i class="fas fa-list me-2"></i>
-                  Le Tue Categorie ({{ categories.length }})
+                  Categorie ({{ categories.length }})
                 </h5>
-                <button 
-                  class="btn btn-outline-warning btn-sm"
-                  (click)="resetToDefaults()"
-                  title="Ripristina categorie predefinite">
-                  <i class="fas fa-undo me-1"></i>
-                  Reset
-                </button>
               </div>
             </div>
             <div class="card-body p-0">

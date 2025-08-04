@@ -1,5 +1,6 @@
+
 import { Injectable } from '@angular/core';
-import { Auth, signInWithPopup, GoogleAuthProvider, signOut, user, User } from '@angular/fire/auth';
+import { Auth, GoogleAuthProvider, signOut, user, User, setPersistence, browserLocalPersistence, signInWithRedirect, getRedirectResult } from '@angular/fire/auth';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -8,22 +9,39 @@ import { Observable } from 'rxjs';
 export class AuthService {
   user$: Observable<User | null>;
   
+
   constructor(private auth: Auth) {
     this.user$ = user(this.auth);
+    // Imposta la persistenza locale per mantenere la sessione anche dopo refresh/riavvio
+    setPersistence(this.auth, browserLocalPersistence);
+    // Gestione automatica del redirect dopo login
+    this.handleRedirectResult();
   }
 
   async signInWithGoogle(): Promise<void> {
     const provider = new GoogleAuthProvider();
-    // Aggiungi gli scope necessari per Google Sheets
     provider.addScope('https://www.googleapis.com/auth/spreadsheets');
     provider.addScope('https://www.googleapis.com/auth/drive');
-    
     try {
-      const result = await signInWithPopup(this.auth, provider);
-      console.log('Login successful:', result.user);
+      // Login in-page, senza popup, compatibile PWA
+      await signInWithRedirect(this.auth, provider);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
+    }
+  }
+
+  // Gestisce il risultato del login dopo il redirect
+  async handleRedirectResult(): Promise<void> {
+    try {
+      const result = await getRedirectResult(this.auth);
+      if (result && result.user) {
+        console.log('Login redirect successful:', result.user);
+      }
+    } catch (error: any) {
+      if (error && typeof error === 'object' && 'code' in error && error.code !== 'auth/no-auth-event') {
+        console.error('Redirect login error:', error);
+      }
     }
   }
 
