@@ -134,7 +134,7 @@ import { User } from '@angular/fire/auth';
                     </div>
                     <div class="expense-actions">
                       <button 
-                        class="btn btn-outline-danger btn-sm"
+                        class="btn-outline-danger btn-sm"
                         (click)="deleteExpense(expense.id!)"
                         title="Elimina spesa">
                         <i class="fas fa-trash"></i>
@@ -166,17 +166,6 @@ import { User } from '@angular/fire/auth';
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            
-            <!-- Reload button at bottom right -->
-            <div *ngIf="expenses.length > 0" class="expenses-footer mt-2">
-              <div class="d-flex justify-content-end">
-                <button 
-                  class="btn btn-outline-success btn-sm"
-                  (click)="loadExpenses()">
-                  <i class="fas fa-sync-alt me-1"></i> Ricarica
-                </button>
               </div>
             </div>
           </div>

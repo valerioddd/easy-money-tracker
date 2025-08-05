@@ -1,6 +1,6 @@
-<div class="app-container">
-  <!-- Header semplificato -->
-  <header class="app-header">
+<div class="app-container" [ngClass]="(user$ | async) ? 'authenticated' : 'unauthenticated'">
+  <!-- Header semplificato - solo per utenti loggati -->
+  <header class="app-header" *ngIf="user$ | async">
     <div class="container-fluid px-3">
       <div class="d-flex justify-content-center align-items-center py-3">
         <div class="d-flex align-items-center">
@@ -17,7 +17,7 @@
     <router-outlet></router-outlet>
   </main>
 
-  <!-- Bottom Navigation -->
+  <!-- Bottom Navigation - solo per utenti loggati -->
   <nav class="bottom-nav" *ngIf="user$ | async">
     <div class="bottom-nav-container">
       <a class="nav-tab" routerLink="/categories" routerLinkActive="active">

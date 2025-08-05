@@ -6,10 +6,10 @@ import { User } from '@angular/fire/auth';
 import { GoogleSheetsModernService } from '../../services/google-sheets-modern.service';
 
 @Component({
-  selector: 'app-profile',
-  standalone: true,
-  imports: [CommonModule],
-  template: `
+    selector: 'app-profile',
+    standalone: true,
+    imports: [CommonModule],
+    template: `
     <div class="container-fluid">
       <div class="row">
         <div class="col-12">
@@ -67,42 +67,18 @@ import { GoogleSheetsModernService } from '../../services/google-sheets-modern.s
             <div class="card-body p-0">
               <div class="settings-list">
                 <div class="setting-item">
-                  <div class="setting-info">
-                    <i class="fas fa-download text-primary"></i>
-                    <div class="setting-details">
+                  <div class="setting-info row">
+                    <i class="fas fa-download text-primary col-1"></i>
+                    <div class="setting-details col">
                       <div class="setting-title">Esporta Dati</div>
                       <div class="setting-description">Scarica tutte le tue spese in CSV</div>
                     </div>
                   </div>
-                  <button class="btn btn-sm btn-outline-primary" (click)="exportData()">
-                    <i class="fas fa-download"></i>
-                  </button>
-                </div>
-                
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <i class="fas fa-trash text-warning"></i>
-                    <div class="setting-details">
-                      <div class="setting-title">Cancella Tutto</div>
-                      <div class="setting-description">Rimuovi tutte le spese salvate</div>
-                    </div>
+                  <div class="col-2">
+                    <button class="btn btn-sm btn-outline-primary" (click)="exportData()">
+                        <i class="fas fa-download"></i>
+                    </button>
                   </div>
-                  <button class="btn btn-sm btn-outline-warning" (click)="clearAllData()">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-                
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <i class="fas fa-info-circle text-info"></i>
-                    <div class="setting-details">
-                      <div class="setting-title">Informazioni App</div>
-                      <div class="setting-description">Versione e crediti</div>
-                    </div>
-                  </div>
-                  <button class="btn btn-sm btn-outline-info" (click)="showAppInfo()">
-                    <i class="fas fa-info"></i>
-                  </button>
                 </div>
                 
                 <div class="setting-item">
@@ -112,16 +88,18 @@ import { GoogleSheetsModernService } from '../../services/google-sheets-modern.s
                       <div class="setting-title">File Google Sheets</div>
                       <div class="setting-description">
                         <span *ngIf="selectedFileId && selectedSheetName">
-                          File selezionato: <span class="fw-bold">{{ selectedFileId | slice:0:8 }}...</span><br>
+                          File selezionato: <span class="fw-bold">{{ selectedFileId | slice:0:13 }}...</span><br>
                           Sheet: <span class="fw-bold">{{ selectedSheetName }}</span>
                         </span>
                         <span *ngIf="!selectedFileId">Nessun file selezionato</span>
                       </div>
                     </div>
                   </div>
-                  <button class="btn btn-sm btn-outline-success" (click)="changeFileAndSheet()">
-                    <i class="fas fa-exchange-alt"></i> Cambia
-                  </button>
+                  <div class="col-2">
+                    <button class="btn btn-sm btn-outline-success" (click)="changeFileAndSheet()">
+                        <i class="fas fa-exchange-alt"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -155,7 +133,7 @@ import { GoogleSheetsModernService } from '../../services/google-sheets-modern.s
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     .profile-avatar {
       width: 80px;
       height: 80px;
@@ -337,110 +315,111 @@ import { GoogleSheetsModernService } from '../../services/google-sheets-modern.s
   `]
 })
 export class ProfileComponent implements OnInit {
-  user$: Observable<User | null>;
-  totalExpenses = 0;
-  totalCategories = 0;
-  daysSinceFirstExpense = 0;
-  message = '';
-  messageType: 'success' | 'error' | 'info' = 'success';
-  selectedFileId: string | null = null;
-  selectedSheetName: string | null = null;
+    user$: Observable<User | null>;
+    totalExpenses = 0;
+    totalCategories = 0;
+    daysSinceFirstExpense = 0;
+    message = '';
+    messageType: 'success' | 'error' | 'info' = 'success';
+    selectedFileId: string | null = null;
+    selectedFileName: string | null = null;
+    selectedSheetName: string | null = null;
 
-  constructor(private authService: AuthService, private sheetsService: GoogleSheetsModernService) {
-    this.user$ = this.authService.user$;
-  }
-
-  ngOnInit() {
-    this.loadStats();
-    this.loadSelectedFileAndSheet();
-  }
-
-  loadStats() {
-    // Qui caricheremo le statistiche dai dati salvati
-    // Per ora mettiamo dei valori di esempio
-    this.totalExpenses = parseInt(localStorage.getItem('total-expenses') || '0');
-    this.totalCategories = JSON.parse(localStorage.getItem('expense-categories') || '[]').length || 8;
-    
-    const firstExpenseDate = localStorage.getItem('first-expense-date');
-    if (firstExpenseDate) {
-      const daysDiff = Math.floor((Date.now() - new Date(firstExpenseDate).getTime()) / (1000 * 60 * 60 * 24));
-      this.daysSinceFirstExpense = daysDiff;
+    constructor(private authService: AuthService, private sheetsService: GoogleSheetsModernService) {
+        this.user$ = this.authService.user$;
     }
-  }
 
-  loadSelectedFileAndSheet() {
-    const { fileId, sheetName } = this.sheetsService.getSelectedFileAndSheet();
-    this.selectedFileId = fileId;
-    this.selectedSheetName = sheetName;
-  }
-
-  async changeFileAndSheet() {
-    try {
-      await this.sheetsService.showPicker();
-      this.loadSelectedFileAndSheet();
-      this.showMessage('File e sheet selezionati!', 'success');
-    } catch (err) {
-      this.showMessage('Selezione annullata', 'info');
+    ngOnInit() {
+        this.loadStats();
+        this.loadSelectedFileAndSheet();
     }
-  }
 
-  exportData() {
-    try {
-      // Esporta i dati delle categorie e altre impostazioni
-      const categories = localStorage.getItem('expense-categories') || '[]';
-      const settings = {
-        categories: JSON.parse(categories),
-        exportDate: new Date().toISOString(),
-        appVersion: '1.0.0'
-      };
-      
-      const dataStr = JSON.stringify(settings, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-      
-      const exportFileDefaultName = `trackmymoney-backup-${new Date().toISOString().split('T')[0]}.json`;
-      
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileDefaultName);
-      linkElement.click();
-      
-      this.showMessage('Dati esportati con successo!', 'success');
-    } catch (error) {
-      this.showMessage('Errore durante l\'esportazione', 'error');
-    }
-  }
+    loadStats() {
+        // Qui caricheremo le statistiche dai dati salvati
+        // Per ora mettiamo dei valori di esempio
+        this.totalExpenses = parseInt(localStorage.getItem('total-expenses') || '0');
+        this.totalCategories = JSON.parse(localStorage.getItem('expense-categories') || '[]').length || 8;
 
-  clearAllData() {
-    if (confirm('Sei sicuro di voler cancellare TUTTI i dati? Questa azione non può essere annullata.')) {
-      if (confirm('ATTENZIONE: Verranno cancellate tutte le spese e le categorie personalizzate. Continuare?')) {
-        try {
-          // Manteniamo solo le categorie predefinite
-          localStorage.removeItem('expense-categories');
-          localStorage.removeItem('total-expenses');
-          localStorage.removeItem('first-expense-date');
-          
-          this.loadStats();
-          this.showMessage('Tutti i dati sono stati cancellati', 'info');
-        } catch (error) {
-          this.showMessage('Errore durante la cancellazione', 'error');
+        const firstExpenseDate = localStorage.getItem('first-expense-date');
+        if (firstExpenseDate) {
+            const daysDiff = Math.floor((Date.now() - new Date(firstExpenseDate).getTime()) / (1000 * 60 * 60 * 24));
+            this.daysSinceFirstExpense = daysDiff;
         }
-      }
     }
-  }
 
-  showAppInfo() {
-    this.showMessage('TrackMyMoney v1.0.0 - Creato con Angular e Google Sheets API', 'info');
-  }
+    loadSelectedFileAndSheet() {
+        const { fileId, sheetName } = this.sheetsService.getSelectedFileAndSheet();
+        this.selectedFileId = fileId;
+        this.selectedSheetName = sheetName;
+    }
 
-  signOut() {
-    this.authService.signOut();
-  }
+    async changeFileAndSheet() {
+        try {
+            await this.sheetsService.showPicker();
+            this.loadSelectedFileAndSheet();
+            this.showMessage('File e sheet selezionati!', 'success');
+        } catch (err) {
+            this.showMessage('Selezione annullata', 'info');
+        }
+    }
 
-  private showMessage(text: string, type: 'success' | 'error' | 'info') {
-    this.message = text;
-    this.messageType = type;
-    setTimeout(() => {
-      this.message = '';
-    }, 4000);
-  }
+    exportData() {
+        try {
+            // Esporta i dati delle categorie e altre impostazioni
+            const categories = localStorage.getItem('expense-categories') || '[]';
+            const settings = {
+                categories: JSON.parse(categories),
+                exportDate: new Date().toISOString(),
+                appVersion: '1.0.0'
+            };
+
+            const dataStr = JSON.stringify(settings, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+            const exportFileDefaultName = `trackmymoney-backup-${new Date().toISOString().split('T')[0]}.json`;
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+
+            this.showMessage('Dati esportati con successo!', 'success');
+        } catch (error) {
+            this.showMessage('Errore durante l\'esportazione', 'error');
+        }
+    }
+
+    clearAllData() {
+        if (confirm('Sei sicuro di voler cancellare TUTTI i dati? Questa azione non può essere annullata.')) {
+            if (confirm('ATTENZIONE: Verranno cancellate tutte le spese e le categorie personalizzate. Continuare?')) {
+                try {
+                    // Manteniamo solo le categorie predefinite
+                    localStorage.removeItem('expense-categories');
+                    localStorage.removeItem('total-expenses');
+                    localStorage.removeItem('first-expense-date');
+
+                    this.loadStats();
+                    this.showMessage('Tutti i dati sono stati cancellati', 'info');
+                } catch (error) {
+                    this.showMessage('Errore durante la cancellazione', 'error');
+                }
+            }
+        }
+    }
+
+    showAppInfo() {
+        this.showMessage('TrackMyMoney v1.0.0 - Creato con Angular e Google Sheets API', 'info');
+    }
+
+    signOut() {
+        this.authService.signOut();
+    }
+
+    private showMessage(text: string, type: 'success' | 'error' | 'info') {
+        this.message = text;
+        this.messageType = type;
+        setTimeout(() => {
+            this.message = '';
+        }, 4000);
+    }
 }
