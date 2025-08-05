@@ -181,7 +181,10 @@ import { User } from '@angular/fire/auth';
             </div>
           </div>
 
-          <div *ngIf="message" class="alert rounded-4 mt-3" [ngClass]="messageType === 'error' ? 'alert-danger' : 'alert-success'">
+          <div *ngIf="message" class="alert rounded-4 mt-3" 
+               [class.alert-success]="messageType === 'success'"
+               [class.alert-danger]="messageType === 'error'"
+               [class.alert-info]="messageType === 'info'">
             <i class="fas" [ngClass]="messageType === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'" class="me-2"></i>
             {{ message }}
           </div>
@@ -411,6 +414,12 @@ import { User } from '@angular/fire/auth';
       border-left: 4px solid var(--danger-color);
     }
     
+    .alert-info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border-left: 4px solid #17a2b8;
+    }
+    
     /* Responsive */
     @media (max-width: 576px) {
       .card-body {
@@ -477,7 +486,7 @@ export class ExpensesComponent implements OnInit {
   categories: Category[] = [];
   isLoading = false;
   message = '';
-  messageType: 'success' | 'error' = 'success';
+  messageType: 'success' | 'error' | 'info' = 'success';
 
   newExpense: Expense = {
     amount: 0,
@@ -495,9 +504,30 @@ export class ExpensesComponent implements OnInit {
   }
 
   ngOnInit() {
+    // Verifica se è presente una selezione file/sheet al primo accesso
+    this.checkFileSelection();
     // Load expenses when component initializes
     this.loadExpenses();
     this.loadCategories();
+  }
+
+  async checkFileSelection() {
+    const { fileId, sheetName } = this.googleSheetsService.getSelectedFileAndSheet();
+    
+    if (!fileId || !sheetName) {
+      // Nessuna selezione salvata, mostra il picker automaticamente
+      this.message = 'Seleziona un file Google Sheets per iniziare';
+      this.messageType = 'info';
+      
+      try {
+        await this.googleSheetsService.showPicker();
+        this.message = 'File e sheet selezionati! Ora puoi aggiungere le tue spese.';
+        this.messageType = 'success';
+      } catch (error) {
+        this.message = 'È necessario selezionare un file per utilizzare l\'app';
+        this.messageType = 'error';
+      }
+    }
   }
 
   loadCategories() {

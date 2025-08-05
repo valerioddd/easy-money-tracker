@@ -75,17 +75,121 @@ export class GoogleSheetsModernService {
     });
   }
 
+  // Carica dinamicamente la Google Picker API
+  private loadPickerApi(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if ((window as any)["google"] && (window as any)["google"].picker) {
+        resolve();
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://apis.google.com/js/api.js';
+      script.onload = () => {
+        gapi.load('picker', { callback: resolve });
+      };
+      script.onerror = reject;
+      document.body.appendChild(script);
+    });
+  }
+
+  // Mostra il Google Picker per scegliere un file e uno sheet
+  async showPicker(): Promise<{ fileId: string, sheetName: string }> {
+    await this.getAccessToken();
+    await this.loadPickerApi();
+
+    return new Promise((resolve, reject) => {
+      const view = new google.picker.DocsView(google.picker.ViewId.SPREADSHEETS)
+        .setIncludeFolders(true)
+        .setSelectFolderEnabled(false);
+
+      const picker = new google.picker.PickerBuilder()
+        .addView(view)
+        .setOAuthToken(this.accessToken)
+        .setCallback((data: any) => {
+          if (data.action === google.picker.Action.PICKED) {
+            const fileId = data.docs[0].id;
+            
+            // Ottieni la lista dei sheet in modo più sicuro
+            this.getSheetNamesForFile(fileId).then((sheets) => {
+              let sheetName = sheets[0];
+              if (sheets.length > 1) {
+                sheetName = prompt('Seleziona il nome dello sheet:\n' + sheets.join('\n'), sheets[0]) || sheets[0];
+              }
+              
+              // Salva in localStorage
+              localStorage.setItem('emt_spreadsheetId', fileId);
+              localStorage.setItem('emt_sheetName', sheetName);
+              this.spreadsheetId = fileId;
+              
+              console.log('File e sheet selezionati:', { fileId, sheetName });
+              resolve({ fileId, sheetName });
+            }).catch((error) => {
+              console.error('Errore nel recupero dei sheet:', error);
+              // Fallback: chiedi all'utente di specificare il nome dello sheet
+              const userSheetName = prompt('Inserisci il nome dello sheet da utilizzare:', 'Foglio1') || 'Foglio1';
+              localStorage.setItem('emt_spreadsheetId', fileId);
+              localStorage.setItem('emt_sheetName', userSheetName);
+              this.spreadsheetId = fileId;
+              console.log('Usando sheet specificato dall\'utente:', userSheetName);
+              resolve({ fileId, sheetName: userSheetName });
+            });
+          } else if (data.action === google.picker.Action.CANCEL) {
+            reject('Picker annullato');
+          }
+        })
+        .setTitle('Scegli un file Google Sheets')
+        .build();
+      picker.setVisible(true);
+    });
+  }
+
+  // Recupera fileId e sheetName selezionati
+  getSelectedFileAndSheet(): { fileId: string | null, sheetName: string | null } {
+    return {
+      fileId: localStorage.getItem('emt_spreadsheetId'),
+      sheetName: localStorage.getItem('emt_sheetName')
+    };
+  }
+
+  // Metodo helper per ottenere i nomi dei sheet di un file
+  private async getSheetNamesForFile(fileId: string): Promise<string[]> {
+    try {
+      console.log('Recupero sheet per il file:', fileId);
+      const response = await gapi.client.sheets.spreadsheets.get({ 
+        spreadsheetId: fileId 
+      });
+      
+      console.log('Risposta completa:', response);
+      console.log('Response result:', response.result);
+      
+      // Verifica che la risposta abbia la struttura corretta
+      if (!response.result) {
+        console.error('Response.result è undefined');
+        return ['Foglio1']; // Fallback
+      }
+      
+      if (!response.result.sheets) {
+        console.error('Response.result.sheets è undefined');
+        console.log('Struttura response.result:', Object.keys(response.result));
+        return ['Foglio1']; // Fallback
+      }
+      
+      const sheets = response.result.sheets.map((s: any) => s.properties.title);
+      console.log('Sheet trovati:', sheets);
+      return sheets.length > 0 ? sheets : ['Foglio1']; // Fallback più sicuro
+    } catch (error) {
+      console.error('Errore nel recupero dei sheet:', error);
+      return ['Foglio1']; // Fallback di default
+    }
+  }
+
   async addExpense(expense: Expense): Promise<void> {
     try {
       await this.initialize();
       await this.getAccessToken();
-      
-      let spreadsheetId = this.spreadsheetId;
-      
-      if (!spreadsheetId) {
-        spreadsheetId = await this.createOrFindSpreadsheet();
-        this.spreadsheetId = spreadsheetId;
-      }
+      const { fileId, sheetName } = this.getSelectedFileAndSheet();
+      if (!fileId || !sheetName) throw new Error('Nessun file/sheet selezionato');
+      this.spreadsheetId = fileId;
 
       const expenseId = expense.id || Date.now().toString();
       const values = [[
@@ -97,8 +201,8 @@ export class GoogleSheetsModernService {
       ]];
 
       const response = await gapi.client.sheets.spreadsheets.values.append({
-        spreadsheetId: spreadsheetId,
-        range: 'Spese!A:E',
+        spreadsheetId: fileId,
+        range: `${sheetName}!A:E`,
         valueInputOption: 'RAW',
         resource: {
           values: values
@@ -144,8 +248,8 @@ export class GoogleSheetsModernService {
 
       const spreadsheetId = createResponse.result.spreadsheetId;
       
-      // Aggiungi headers
-      await this.addHeaders(spreadsheetId);
+      // Aggiungi headers al primo sheet
+      await this.addHeaders(spreadsheetId, 'Spese');
       
       console.log('Created new spreadsheet:', spreadsheetId);
       return spreadsheetId;
@@ -155,12 +259,12 @@ export class GoogleSheetsModernService {
     }
   }
 
-  private async addHeaders(spreadsheetId: string): Promise<void> {
+  private async addHeaders(spreadsheetId: string, sheetName: string = 'Sheet1'): Promise<void> {
     const headers = [['Data', 'Importo', 'Categoria', 'Descrizione', 'ID']];
     
     await gapi.client.sheets.spreadsheets.values.update({
       spreadsheetId: spreadsheetId,
-      range: 'Spese!A1:E1',
+      range: `${sheetName}!A1:E1`,
       valueInputOption: 'RAW',
       resource: {
         values: headers
@@ -172,14 +276,13 @@ export class GoogleSheetsModernService {
     try {
       await this.initialize();
       await this.getAccessToken();
-      
-      if (!this.spreadsheetId) {
-        this.spreadsheetId = await this.createOrFindSpreadsheet();
-      }
+      const { fileId, sheetName } = this.getSelectedFileAndSheet();
+      if (!fileId || !sheetName) throw new Error('Nessun file/sheet selezionato');
+      this.spreadsheetId = fileId;
 
       const response = await gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: this.spreadsheetId,
-        range: 'Spese!A2:E' // Skip header row
+        spreadsheetId: fileId,
+        range: `${sheetName}!A2:E` // Skip header row
       });
 
       const values = response.result.values || [];
@@ -201,28 +304,32 @@ export class GoogleSheetsModernService {
     try {
       await this.initialize();
       await this.getAccessToken();
-      
-      if (!this.spreadsheetId) {
-        this.spreadsheetId = await this.createOrFindSpreadsheet();
-      }
+      const { fileId, sheetName } = this.getSelectedFileAndSheet();
+      if (!fileId || !sheetName) throw new Error('Nessun file/sheet selezionato');
+      this.spreadsheetId = fileId;
 
       // Prima trova la riga dell'expense
       const response = await gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: this.spreadsheetId,
-        range: 'Spese!A:E'
+        spreadsheetId: fileId,
+        range: `${sheetName}!A:E`
       });
 
       const values = response.result.values || [];
       const rowIndex = values.findIndex((row: any[]) => row[4] === expenseId);
 
       if (rowIndex > 0) { // Skip header row
+        // Ottenere l'ID del sheet
+        const sheetData = await gapi.client.sheets.spreadsheets.get({ spreadsheetId: fileId });
+        const sheet = sheetData.result.sheets.find((s: any) => s.properties.title === sheetName);
+        const sheetId = sheet ? sheet.properties.sheetId : 0;
+
         await gapi.client.sheets.spreadsheets.batchUpdate({
-          spreadsheetId: this.spreadsheetId,
+          spreadsheetId: fileId,
           resource: {
             requests: [{
               deleteDimension: {
                 range: {
-                  sheetId: 0, // ID del primo sheet
+                  sheetId: sheetId,
                   dimension: 'ROWS',
                   startIndex: rowIndex,
                   endIndex: rowIndex + 1

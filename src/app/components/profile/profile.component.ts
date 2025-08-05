@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { Observable } from 'rxjs';
 import { User } from '@angular/fire/auth';
+import { GoogleSheetsModernService } from '../../services/google-sheets-modern.service';
 
 @Component({
   selector: 'app-profile',
@@ -101,6 +102,25 @@ import { User } from '@angular/fire/auth';
                   </div>
                   <button class="btn btn-sm btn-outline-info" (click)="showAppInfo()">
                     <i class="fas fa-info"></i>
+                  </button>
+                </div>
+                
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <i class="fas fa-table text-success"></i>
+                    <div class="setting-details">
+                      <div class="setting-title">File Google Sheets</div>
+                      <div class="setting-description">
+                        <span *ngIf="selectedFileId && selectedSheetName">
+                          File selezionato: <span class="fw-bold">{{ selectedFileId | slice:0:8 }}...</span><br>
+                          Sheet: <span class="fw-bold">{{ selectedSheetName }}</span>
+                        </span>
+                        <span *ngIf="!selectedFileId">Nessun file selezionato</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="btn btn-sm btn-outline-success" (click)="changeFileAndSheet()">
+                    <i class="fas fa-exchange-alt"></i> Cambia
                   </button>
                 </div>
               </div>
@@ -323,13 +343,16 @@ export class ProfileComponent implements OnInit {
   daysSinceFirstExpense = 0;
   message = '';
   messageType: 'success' | 'error' | 'info' = 'success';
+  selectedFileId: string | null = null;
+  selectedSheetName: string | null = null;
 
-  constructor(private authService: AuthService) {
+  constructor(private authService: AuthService, private sheetsService: GoogleSheetsModernService) {
     this.user$ = this.authService.user$;
   }
 
   ngOnInit() {
     this.loadStats();
+    this.loadSelectedFileAndSheet();
   }
 
   loadStats() {
@@ -342,6 +365,22 @@ export class ProfileComponent implements OnInit {
     if (firstExpenseDate) {
       const daysDiff = Math.floor((Date.now() - new Date(firstExpenseDate).getTime()) / (1000 * 60 * 60 * 24));
       this.daysSinceFirstExpense = daysDiff;
+    }
+  }
+
+  loadSelectedFileAndSheet() {
+    const { fileId, sheetName } = this.sheetsService.getSelectedFileAndSheet();
+    this.selectedFileId = fileId;
+    this.selectedSheetName = sheetName;
+  }
+
+  async changeFileAndSheet() {
+    try {
+      await this.sheetsService.showPicker();
+      this.loadSelectedFileAndSheet();
+      this.showMessage('File e sheet selezionati!', 'success');
+    } catch (err) {
+      this.showMessage('Selezione annullata', 'info');
     }
   }
 
