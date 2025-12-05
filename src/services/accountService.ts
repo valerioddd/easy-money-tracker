@@ -88,24 +88,46 @@ export const getAssets = (): Asset[] => {
 
 /**
  * Record a balance snapshot in Assets history
+ * If an entry already exists for today and this account, update it instead
  * @param account The account to record
  */
 const recordBalanceHistory = async (account: Account): Promise<Asset> => {
-  const assetData: Omit<Asset, 'id'> = {
-    dateISO: getTodayISO(),
-    accountName: account.name,
-    value: account.balance,
-    icon: account.emoji,
-  };
+  const todayISO = getTodayISO();
+  
+  // Check if there's already an entry for today and this account
+  const existingAsset = state.assets.find(
+    (a) => a.dateISO === todayISO && a.accountName === account.name
+  );
 
-  const asset = await AssetsAdapter.create(assetData);
-  state.assets = [asset, ...state.assets];
-  return asset;
+  if (existingAsset) {
+    // Update existing entry
+    const updatedAsset: Asset = {
+      ...existingAsset,
+      value: account.balance,
+      icon: account.emoji,
+    };
+    await AssetsAdapter.update(updatedAsset);
+    state.assets = state.assets.map((a) =>
+      a.id === existingAsset.id ? updatedAsset : a
+    );
+    return updatedAsset;
+  } else {
+    // Create new entry
+    const assetData: Omit<Asset, 'id'> = {
+      dateISO: todayISO,
+      accountName: account.name,
+      value: account.balance,
+      icon: account.emoji,
+    };
+    const asset = await AssetsAdapter.create(assetData);
+    state.assets = [asset, ...state.assets];
+    return asset;
+  }
 };
 
 /**
  * Create a new account
- * Records initial balance in Assets history
+ * Records initial balance in Assets history (best-effort)
  */
 export const createAccount = async (
   data: Omit<Account, 'id'>
@@ -115,8 +137,12 @@ export const createAccount = async (
     state.accounts = [...state.accounts, account];
     state.isOnline = true;
 
-    // Record initial balance in history
-    await recordBalanceHistory(account);
+    // Record initial balance in history (best-effort)
+    try {
+      await recordBalanceHistory(account);
+    } catch (historyError) {
+      console.warn('Failed to record initial balance history:', historyError);
+    }
 
     return account;
   } catch (error) {
@@ -127,7 +153,7 @@ export const createAccount = async (
 
 /**
  * Update an account's balance
- * Records the new balance in Assets history
+ * Records the new balance in Assets history (best-effort)
  */
 export const updateAccountBalance = async (
   accountId: string,
@@ -150,8 +176,12 @@ export const updateAccountBalance = async (
     );
     state.isOnline = true;
 
-    // Record new balance in history
-    await recordBalanceHistory(updatedAccount);
+    // Record new balance in history (best-effort)
+    try {
+      await recordBalanceHistory(updatedAccount);
+    } catch (historyError) {
+      console.warn('Failed to record balance history:', historyError);
+    }
 
     return updatedAccount;
   } catch (error) {
@@ -163,6 +193,7 @@ export const updateAccountBalance = async (
 /**
  * Update an account (name, emoji, and optionally balance)
  * If balance changes, records in Assets history
+ * Note: History recording is best-effort; account update is prioritized
  */
 export const updateAccount = async (account: Account): Promise<Account> => {
   const existingAccount = state.accounts.find((a) => a.id === account.id);
@@ -179,9 +210,14 @@ export const updateAccount = async (account: Account): Promise<Account> => {
     );
     state.isOnline = true;
 
-    // Record new balance in history if it changed
+    // Record new balance in history if it changed (best-effort)
     if (balanceChanged) {
-      await recordBalanceHistory(account);
+      try {
+        await recordBalanceHistory(account);
+      } catch (historyError) {
+        // Log error but don't fail the account update
+        console.warn('Failed to record balance history:', historyError);
+      }
     }
 
     return account;
