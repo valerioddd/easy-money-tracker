@@ -2,12 +2,13 @@
  * Sheet Adapters
  *
  * Adapters for converting between typed objects and sheet rows.
- * Each adapter handles a specific sheet type (Movements, Categories, Assets, ChartsBase).
+ * Each adapter handles a specific sheet type (Movements, Categories, Accounts, Assets, ChartsBase).
  */
 
 import type {
   Movement,
   Category,
+  Account,
   Asset,
   ChartsBase,
   SheetRow,
@@ -18,10 +19,12 @@ import type {
 import {
   createMovement,
   createCategory,
+  createAccountModel,
   createAsset,
   createChartsBase,
   validateMovement,
   validateCategory,
+  validateAccount,
   validateAsset,
 } from './models';
 import {
@@ -196,6 +199,75 @@ export const CategoriesAdapter: SheetAdapter<Category> = {
 
   async upsert(item: Category): Promise<Category> {
     const errors = validateCategory(item);
+    if (errors.length > 0) {
+      throw new Error(`Validation failed: ${errors.join(', ')}`);
+    }
+    const row = this.toRow(item);
+    await upsertById(this.sheetName, item.id, row);
+    return item;
+  },
+};
+
+/**
+ * Accounts Sheet Adapter
+ *
+ * Column order: id, name, emoji, balance
+ */
+export const AccountsAdapter: SheetAdapter<Account> = {
+  sheetName: 'Accounts',
+
+  fromRow(row: SheetRow): Account {
+    return {
+      id: String(row[0] ?? ''),
+      name: String(row[1] ?? ''),
+      emoji: String(row[2] ?? '💰'),
+      balance: Number(row[3]) || 0,
+    };
+  },
+
+  toRow(item: Account): SheetRow {
+    return [item.id, item.name, item.emoji, item.balance];
+  },
+
+  async getAll(): Promise<Account[]> {
+    const rows = await readSheet(`${this.sheetName}!A:D`);
+    // Skip header row
+    return rows.slice(1).map((row) => this.fromRow(row));
+  },
+
+  async getById(id: string): Promise<Account | null> {
+    const result = await findById(this.sheetName, id);
+    if (!result) return null;
+    return this.fromRow(result.row);
+  },
+
+  async create(data: Omit<Account, 'id'>): Promise<Account> {
+    const item = createAccountModel(data);
+    const errors = validateAccount(item);
+    if (errors.length > 0) {
+      throw new Error(`Validation failed: ${errors.join(', ')}`);
+    }
+    const row = this.toRow(item);
+    await appendRows(`${this.sheetName}!A:D`, [row]);
+    return item;
+  },
+
+  async update(item: Account): Promise<Account> {
+    const errors = validateAccount(item);
+    if (errors.length > 0) {
+      throw new Error(`Validation failed: ${errors.join(', ')}`);
+    }
+    const row = this.toRow(item);
+    await upsertById(this.sheetName, item.id, row);
+    return item;
+  },
+
+  async delete(id: string): Promise<boolean> {
+    return deleteById(this.sheetName, id, 4);
+  },
+
+  async upsert(item: Account): Promise<Account> {
+    const errors = validateAccount(item);
     if (errors.length > 0) {
       throw new Error(`Validation failed: ${errors.join(', ')}`);
     }
@@ -418,6 +490,30 @@ export const batchCreateAssets = async (
 };
 
 /**
+ * Batch create multiple accounts
+ * @param items Array of account data (without IDs)
+ * @returns Array of created accounts with IDs
+ */
+export const batchCreateAccounts = async (
+  items: Array<Omit<Account, 'id'>>
+): Promise<Account[]> => {
+  const accounts: Account[] = [];
+  const rows: SheetRow[] = [];
+
+  for (const data of items) {
+    const account = createAccountModel(data);
+    accounts.push(account);
+    rows.push(AccountsAdapter.toRow(account));
+  }
+
+  if (rows.length > 0) {
+    await batchWrite([{ range: `${AccountsAdapter.sheetName}!A:Z`, rows }]);
+  }
+
+  return accounts;
+};
+
+/**
  * Batch create multiple charts base entries
  * @param items Array of charts base data (without IDs)
  * @returns Array of created charts base entries with IDs
@@ -523,6 +619,7 @@ export const batchCreateAll = async (options: {
 export const getAdapters = () => ({
   movements: MovementsAdapter,
   categories: CategoriesAdapter,
+  accounts: AccountsAdapter,
   assets: AssetsAdapter,
   chartsBase: ChartsBaseAdapter,
 });
