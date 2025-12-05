@@ -12,6 +12,15 @@ import type { SheetRow } from './models';
 const SHEETS_API_BASE = 'https://sheets.googleapis.com/v4';
 
 /**
+ * Selected sheet structure
+ */
+export interface SelectedSheet {
+  fileId: string | null;
+  fileName: string | null;
+  lastModified: string | null;
+}
+
+/**
  * Rate limiting configuration
  */
 interface RateLimitConfig {
@@ -167,7 +176,7 @@ const authenticatedFetch = async (
  * @returns Spreadsheet ID or throws if not selected
  */
 const getSpreadsheetId = (): string => {
-  const sheet = getSelectedSheet() as { fileId: string | null; fileName: string | null; lastModified: string | null };
+  const sheet = getSelectedSheet() as SelectedSheet;
   if (!sheet.fileId) {
     throw new SheetsApiError(
       'No spreadsheet selected',

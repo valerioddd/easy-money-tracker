@@ -346,47 +346,167 @@ export const ChartsBaseAdapter: SheetAdapter<ChartsBase> = {
 };
 
 /**
- * Batch create multiple items across different sheets
- * @param operations Array of operations with adapter and items
- * @returns Results for each operation
+ * Batch create multiple movements
+ * @param items Array of movement data (without IDs)
+ * @returns Array of created movements with IDs
  */
-export const batchCreate = async <T extends { id: string }>(
-  operations: Array<{
-    adapter: SheetAdapter<T>;
-    items: Array<Omit<T, 'id'>>;
-  }>
-): Promise<T[][]> => {
+export const batchCreateMovements = async (
+  items: Array<Omit<Movement, 'id'>>
+): Promise<Movement[]> => {
+  const movements: Movement[] = [];
+  const rows: SheetRow[] = [];
+
+  for (const data of items) {
+    const movement = createMovement(data);
+    movements.push(movement);
+    rows.push(MovementsAdapter.toRow(movement));
+  }
+
+  if (rows.length > 0) {
+    await batchWrite([{ range: `${MovementsAdapter.sheetName}!A:Z`, rows }]);
+  }
+
+  return movements;
+};
+
+/**
+ * Batch create multiple categories
+ * @param items Array of category data (without IDs)
+ * @returns Array of created categories with IDs
+ */
+export const batchCreateCategories = async (
+  items: Array<Omit<Category, 'id'>>
+): Promise<Category[]> => {
+  const categories: Category[] = [];
+  const rows: SheetRow[] = [];
+
+  for (const data of items) {
+    const category = createCategory(data);
+    categories.push(category);
+    rows.push(CategoriesAdapter.toRow(category));
+  }
+
+  if (rows.length > 0) {
+    await batchWrite([{ range: `${CategoriesAdapter.sheetName}!A:Z`, rows }]);
+  }
+
+  return categories;
+};
+
+/**
+ * Batch create multiple assets
+ * @param items Array of asset data (without IDs)
+ * @returns Array of created assets with IDs
+ */
+export const batchCreateAssets = async (
+  items: Array<Omit<Asset, 'id'>>
+): Promise<Asset[]> => {
+  const assets: Asset[] = [];
+  const rows: SheetRow[] = [];
+
+  for (const data of items) {
+    const asset = createAsset(data);
+    assets.push(asset);
+    rows.push(AssetsAdapter.toRow(asset));
+  }
+
+  if (rows.length > 0) {
+    await batchWrite([{ range: `${AssetsAdapter.sheetName}!A:Z`, rows }]);
+  }
+
+  return assets;
+};
+
+/**
+ * Batch create multiple charts base entries
+ * @param items Array of charts base data (without IDs)
+ * @returns Array of created charts base entries with IDs
+ */
+export const batchCreateChartsBase = async (
+  items: Array<Omit<ChartsBase, 'id'>>
+): Promise<ChartsBase[]> => {
+  const chartsBaseEntries: ChartsBase[] = [];
+  const rows: SheetRow[] = [];
+
+  for (const data of items) {
+    const chartsBase = createChartsBase(data);
+    chartsBaseEntries.push(chartsBase);
+    rows.push(ChartsBaseAdapter.toRow(chartsBase));
+  }
+
+  if (rows.length > 0) {
+    await batchWrite([{ range: `${ChartsBaseAdapter.sheetName}!A:Z`, rows }]);
+  }
+
+  return chartsBaseEntries;
+};
+
+/**
+ * Batch create items across multiple sheets in a single API call
+ * @param options Object with optional arrays for each entity type
+ * @returns Object with created items for each entity type
+ */
+export const batchCreateAll = async (options: {
+  movements?: Array<Omit<Movement, 'id'>>;
+  categories?: Array<Omit<Category, 'id'>>;
+  assets?: Array<Omit<Asset, 'id'>>;
+  chartsBase?: Array<Omit<ChartsBase, 'id'>>;
+}): Promise<{
+  movements: Movement[];
+  categories: Category[];
+  assets: Asset[];
+  chartsBase: ChartsBase[];
+}> => {
   const batchRequests: BatchWriteRequest[] = [];
-  const createdItems: T[][] = [];
+  const result = {
+    movements: [] as Movement[],
+    categories: [] as Category[],
+    assets: [] as Asset[],
+    chartsBase: [] as ChartsBase[],
+  };
 
-  for (const op of operations) {
-    const items: T[] = [];
+  // Process movements
+  if (options.movements && options.movements.length > 0) {
     const rows: SheetRow[] = [];
-
-    for (const data of op.items) {
-      // Create item with ID based on the adapter's type
-      let item: T;
-      if (op.adapter.sheetName === 'Movements') {
-        item = createMovement(data as unknown as Omit<Movement, 'id'>) as unknown as T;
-      } else if (op.adapter.sheetName === 'Categories') {
-        item = createCategory(data as unknown as Omit<Category, 'id'>) as unknown as T;
-      } else if (op.adapter.sheetName === 'Assets') {
-        item = createAsset(data as unknown as Omit<Asset, 'id'>) as unknown as T;
-      } else {
-        item = createChartsBase(data as unknown as Omit<ChartsBase, 'id'>) as unknown as T;
-      }
-      items.push(item);
-      rows.push(op.adapter.toRow(item));
+    for (const data of options.movements) {
+      const movement = createMovement(data);
+      result.movements.push(movement);
+      rows.push(MovementsAdapter.toRow(movement));
     }
+    batchRequests.push({ range: `${MovementsAdapter.sheetName}!A:Z`, rows });
+  }
 
-    createdItems.push(items);
-
-    if (rows.length > 0) {
-      batchRequests.push({
-        range: `${op.adapter.sheetName}!A:Z`,
-        rows,
-      });
+  // Process categories
+  if (options.categories && options.categories.length > 0) {
+    const rows: SheetRow[] = [];
+    for (const data of options.categories) {
+      const category = createCategory(data);
+      result.categories.push(category);
+      rows.push(CategoriesAdapter.toRow(category));
     }
+    batchRequests.push({ range: `${CategoriesAdapter.sheetName}!A:Z`, rows });
+  }
+
+  // Process assets
+  if (options.assets && options.assets.length > 0) {
+    const rows: SheetRow[] = [];
+    for (const data of options.assets) {
+      const asset = createAsset(data);
+      result.assets.push(asset);
+      rows.push(AssetsAdapter.toRow(asset));
+    }
+    batchRequests.push({ range: `${AssetsAdapter.sheetName}!A:Z`, rows });
+  }
+
+  // Process charts base
+  if (options.chartsBase && options.chartsBase.length > 0) {
+    const rows: SheetRow[] = [];
+    for (const data of options.chartsBase) {
+      const chartsBase = createChartsBase(data);
+      result.chartsBase.push(chartsBase);
+      rows.push(ChartsBaseAdapter.toRow(chartsBase));
+    }
+    batchRequests.push({ range: `${ChartsBaseAdapter.sheetName}!A:Z`, rows });
   }
 
   // Execute batch write
@@ -394,7 +514,7 @@ export const batchCreate = async <T extends { id: string }>(
     await batchWrite(batchRequests);
   }
 
-  return createdItems;
+  return result;
 };
 
 /**
