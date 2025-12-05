@@ -56,7 +56,7 @@ Defines available categories for transactions.
 | `name` | string | Yes | Display name | Max 100 characters |
 | `type` | string | Yes | Category type | Enum: `income`, `expense` |
 | `icon` | string | No | Icon identifier | Valid icon name from icon set |
-| `color` | string | No | Category color | Hex color code (e.g., `#FF5722`) |
+| `color` | string | No | Category color | 6-digit hex code with `#` prefix (e.g., `#FF5722`). Invalid values ignored. |
 | `parentId` | string | No | Parent category for subcategories | Must exist in Categories sheet |
 | `isActive` | boolean | Yes | Whether category is active | Default: `true` |
 | `createdAt` | string | Yes | Creation timestamp | ISO 8601 format |
@@ -81,7 +81,7 @@ Defines financial assets and accounts.
 | `currency` | string | Yes | Currency code | ISO 4217 format (e.g., `EUR`, `USD`) |
 | `initialBalance` | number | Yes | Starting balance | Can be negative for credit accounts |
 | `icon` | string | No | Icon identifier | Valid icon name from icon set |
-| `color` | string | No | Asset color | Hex color code |
+| `color` | string | No | Asset color | 6-digit hex code with `#` prefix (e.g., `#2196F3`). Invalid values ignored. |
 | `isActive` | boolean | Yes | Whether asset is active | Default: `true` |
 | `createdAt` | string | Yes | Creation timestamp | ISO 8601 format |
 

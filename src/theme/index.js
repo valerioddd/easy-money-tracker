@@ -3,7 +3,7 @@
  * Exports all theme-related values for consistent styling
  */
 
-export { colors, default as Colors } from './colors';
+export { colors } from './colors';
 
 export const spacing = {
   xs: 4,
