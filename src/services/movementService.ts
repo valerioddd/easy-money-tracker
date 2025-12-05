@@ -346,3 +346,98 @@ export const clearMovementState = (): void => {
   state.isLoading = false;
   state.error = null;
 };
+
+/**
+ * Check if a category can be deleted
+ * @param categoryId The category ID to check
+ * @returns Object with canDelete flag and usage count
+ */
+export const canDeleteCategory = (categoryId: string): {
+  canDelete: boolean;
+  usageCount: number;
+  movements: Movement[];
+} => {
+  const usedMovements = state.movements.filter((m) => m.categoryId === categoryId);
+  return {
+    canDelete: usedMovements.length === 0,
+    usageCount: usedMovements.length,
+    movements: usedMovements,
+  };
+};
+
+/**
+ * Update an existing category
+ * @param category The category to update
+ * @returns The updated category
+ */
+export const updateCategory = async (category: Category): Promise<Category> => {
+  try {
+    await CategoriesAdapter.update(category);
+    state.categories = state.categories.map((c) =>
+      c.id === category.id ? category : c
+    );
+    state.isOnline = true;
+    return category;
+  } catch (error) {
+    state.isOnline = false;
+    throw error;
+  }
+};
+
+/**
+ * Create a new category
+ * @param data Category data without ID
+ * @returns The created category
+ */
+export const createCategoryRecord = async (
+  data: Omit<Category, 'id'>
+): Promise<Category> => {
+  try {
+    const category = await CategoriesAdapter.create(data);
+    state.categories = [...state.categories, category];
+    state.isOnline = true;
+    return category;
+  } catch (error) {
+    state.isOnline = false;
+    throw error;
+  }
+};
+
+/**
+ * Delete a category (only if not in use)
+ * @param categoryId The category ID to delete
+ * @returns True if deleted, throws if in use
+ */
+export const deleteCategory = async (categoryId: string): Promise<boolean> => {
+  const usageCheck = canDeleteCategory(categoryId);
+  if (!usageCheck.canDelete) {
+    throw new Error(
+      `Cannot delete category: it is used by ${usageCheck.usageCount} movement(s). Please edit those movements first.`
+    );
+  }
+
+  try {
+    await CategoriesAdapter.delete(categoryId);
+    state.categories = state.categories.filter((c) => c.id !== categoryId);
+    state.isOnline = true;
+    return true;
+  } catch (error) {
+    state.isOnline = false;
+    throw error;
+  }
+};
+
+/**
+ * Default categories to seed a new sheet with
+ */
+export const DEFAULT_CATEGORIES: Array<Omit<Category, 'id'>> = [
+  // Income categories
+  { name: 'Salary', color: '#4CAF50', typeFixed: 'income' },
+  { name: 'Refund', color: '#8BC34A', typeFixed: 'income' },
+  // Expense categories
+  { name: 'Rent', color: '#F44336', typeFixed: 'expense' },
+  { name: 'Food', color: '#FF9800', typeFixed: 'expense' },
+  { name: 'Travel', color: '#2196F3', typeFixed: 'expense' },
+  { name: 'Utilities', color: '#9C27B0', typeFixed: 'expense' },
+  { name: 'Misc', color: '#607D8B', typeFixed: 'expense' },
+];

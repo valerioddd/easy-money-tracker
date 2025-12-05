@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { colors, spacing, typography, borderRadius } from '../theme';
-import { MovementForm, MovementList } from '../components';
+import { MovementForm, MovementList, CategoryForm, CategoryList } from '../components';
 import type { Movement, Category } from '../services/models';
 import {
   loadCategories,
@@ -35,6 +35,9 @@ import {
   getCategories,
   getMovements,
   clearMovementState,
+  updateCategory,
+  createCategoryRecord,
+  deleteCategory,
 } from '../services/movementService';
 import { getCurrentUser } from '../services/googleAuth';
 import { getSelectedSheet, clearSelectedSheet } from '../services/googleSheets';
@@ -69,6 +72,11 @@ export default function MovementScreen({
   const [editingMovement, setEditingMovement] = useState<Movement | null>(null);
   const [syncStatus, setSyncStatus] = useState(getServiceState());
   const [error, setError] = useState<string | null>(null);
+  
+  // Category management state
+  const [showCategories, setShowCategories] = useState(false);
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const user = getCurrentUser() as UserInfo | null;
   const selectedSheet = getSelectedSheet() as SelectedSheet;
@@ -189,6 +197,65 @@ export default function MovementScreen({
     }
   };
 
+  // Category management handlers
+  const handleShowCategories = () => {
+    setShowCategories(true);
+  };
+
+  const handleHideCategories = () => {
+    setShowCategories(false);
+    setShowCategoryForm(false);
+    setEditingCategory(null);
+    // Refresh categories after closing
+    setCategories(getCategories());
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setShowCategoryForm(true);
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      await deleteCategory(id);
+      setCategories(getCategories());
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete category';
+      Alert.alert('Error', errorMessage);
+    }
+  };
+
+  const handleCategoryFormSubmit = async (
+    data: Omit<Category, 'id'> | Category
+  ) => {
+    setIsSubmitting(true);
+    try {
+      if ('id' in data && data.id) {
+        await updateCategory(data as Category);
+      } else {
+        await createCategoryRecord(data as Omit<Category, 'id'>);
+      }
+      setCategories(getCategories());
+      setShowCategoryForm(false);
+      setEditingCategory(null);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save category';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancelCategoryForm = () => {
+    setShowCategoryForm(false);
+    setEditingCategory(null);
+  };
+
+  const handleNewCategory = () => {
+    setEditingCategory(null);
+    setShowCategoryForm(true);
+  };
+
   // Render sync status badge
   const renderSyncStatus = () => {
     if (syncStatus.queueLength > 0) {
@@ -247,6 +314,12 @@ export default function MovementScreen({
           </View>
           <View style={styles.headerActions}>
             {renderSyncStatus()}
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={handleShowCategories}
+            >
+              <Text style={styles.headerButtonText}>📂</Text>
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerButton}
               onPress={handleChangeSheet}
@@ -331,6 +404,63 @@ export default function MovementScreen({
           onCancel={handleCancelForm}
           isLoading={isSubmitting}
         />
+      </Modal>
+
+      {/* Categories Management Modal */}
+      <Modal
+        visible={showCategories}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={handleHideCategories}
+      >
+        <View style={styles.categoriesModal}>
+          <StatusBar style="light" />
+          
+          {/* Categories Header */}
+          <View style={styles.categoriesHeader}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleHideCategories}
+            >
+              <Text style={styles.backButtonText}>←</Text>
+            </TouchableOpacity>
+            <Text style={styles.categoriesTitle}>Categories</Text>
+            <View style={styles.headerSpacer} />
+          </View>
+
+          {/* Category List */}
+          <CategoryList
+            categories={categories}
+            onEdit={handleEditCategory}
+            onDelete={handleDeleteCategory}
+            isLoading={isLoading}
+            onRefresh={loadData}
+          />
+
+          {/* FAB - Add New Category */}
+          <TouchableOpacity
+            style={styles.fab}
+            onPress={handleNewCategory}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.fabText}>+</Text>
+          </TouchableOpacity>
+
+          {/* Category Form Modal */}
+          <Modal
+            visible={showCategoryForm}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={handleCancelCategoryForm}
+          >
+            <CategoryForm
+              category={editingCategory}
+              onSubmit={handleCategoryFormSubmit}
+              onCancel={handleCancelCategoryForm}
+              isLoading={isSubmitting}
+            />
+          </Modal>
+        </View>
       </Modal>
     </View>
   );
@@ -475,5 +605,36 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: '300',
     lineHeight: 36,
+  },
+  categoriesModal: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  categoriesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingTop: spacing.xl + spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backButton: {
+    padding: spacing.sm,
+    marginLeft: -spacing.sm,
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: colors.textPrimary,
+  },
+  categoriesTitle: {
+    fontSize: typography.fontSizeTitle,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+  },
+  headerSpacer: {
+    width: 40,
   },
 });
