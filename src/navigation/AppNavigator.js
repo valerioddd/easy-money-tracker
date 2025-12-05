@@ -6,7 +6,7 @@
 import React, { useState, useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { LoginScreen, SheetSelectionScreen, HomeScreen } from '../screens';
+import { LoginScreen, SheetSelectionScreen, MovementScreen } from '../screens';
 import { isAuthenticated, clearAuthState } from '../services/googleAuth';
 import { getSelectedSheet, clearSelectedSheet } from '../services/googleSheets';
 import { colors } from '../theme';
@@ -97,7 +97,7 @@ export default function AppNavigator() {
         ) : (
           <Stack.Screen name={SCREENS.HOME}>
             {(props) => (
-              <HomeScreen
+              <MovementScreen
                 {...props}
                 onChangeSheet={handleChangeSheet}
                 onLogout={handleLogout}

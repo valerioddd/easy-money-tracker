@@ -10,3 +10,4 @@ export * from './googleSheets';
 export * from './models';
 export * from './sheetsClient';
 export * from './adapters';
+export * from './movementService';
