@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import { colors, spacing, typography, borderRadius } from '../theme';
 import type { Movement, Category } from '../services/models';
-import { formatAmount } from '../services/movementService';
+import { formatAmountWithSign, formatAmount } from '../services/movementService';
 
 interface MovementListProps {
   movements: Movement[];
@@ -162,7 +162,7 @@ export default function MovementList({
               { color: isIncome ? colors.income : colors.expense },
             ]}
           >
-            {isIncome ? '+' : '-'}{formatAmount(movement.amount)}
+            {formatAmountWithSign(movement.amount, movement.type)}
           </Text>
           <View style={styles.actionButtons}>
             <TouchableOpacity

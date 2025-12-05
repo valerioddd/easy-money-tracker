@@ -45,7 +45,7 @@ const state: MovementServiceState = {
  * Generate a unique queue operation ID
  */
 const generateQueueId = (): string => {
-  return `queue-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `queue-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 };
 
 /**
@@ -283,6 +283,17 @@ export const getTodayISO = (): string => {
  */
 export const formatAmount = (amount: number): string => {
   return `€${amount.toFixed(2)}`;
+};
+
+/**
+ * Format amount with sign based on movement type
+ * @param amount The amount value
+ * @param type The movement type (income or expense)
+ * @returns Formatted string with appropriate sign (e.g., "+€10.00" or "-€10.00")
+ */
+export const formatAmountWithSign = (amount: number, type: MovementType): string => {
+  const sign = type === 'income' ? '+' : '-';
+  return `${sign}${formatAmount(amount)}`;
 };
 
 /**

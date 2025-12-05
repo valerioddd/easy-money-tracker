@@ -92,28 +92,61 @@ export default function MovementForm({
 
     setErrors([]);
 
-    const movementData = {
-      ...(movement ? { id: movement.id } : {}),
-      dateISO,
-      amount: parsedAmount,
-      categoryId,
-      description,
-      type: derivedType,
-    };
-
-    onSubmit(movementData as Omit<Movement, 'id'> | Movement);
+    if (movement && movement.id) {
+      // Update existing movement
+      onSubmit({
+        id: movement.id,
+        dateISO,
+        amount: parsedAmount,
+        categoryId,
+        description,
+        type: derivedType,
+      });
+    } else {
+      // Create new movement
+      onSubmit({
+        dateISO,
+        amount: parsedAmount,
+        categoryId,
+        description,
+        type: derivedType,
+      });
+    }
   };
 
   // Format date for display
   const formatDateForDisplay = (isoDate: string): string => {
+    if (!isoDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return isoDate; // Return as-is for intermediate input
+    }
     const [year, month, day] = isoDate.split('-');
     return `${day}/${month}/${year}`;
   };
 
+  // Validate date parts ensuring valid day, month, and year ranges
+  const isValidDate = (day: string, month: string, year: string): boolean => {
+    const d = parseInt(day, 10);
+    const m = parseInt(month, 10);
+    const y = parseInt(year, 10);
+    
+    // Check for NaN values
+    if (isNaN(d) || isNaN(m) || isNaN(y)) return false;
+    
+    // Validate ranges
+    if (m < 1 || m > 12) return false;
+    if (d < 1 || d > 31) return false;
+    if (y < 1900 || y > 2100) return false;
+    
+    // Check days in month (using Date to handle leap years)
+    const daysInMonth = new Date(y, m, 0).getDate();
+    return d <= daysInMonth;
+  };
+
   // Handle date change (simple text input for cross-platform)
   const handleDateChange = (text: string): void => {
-    // Accept input in DD/MM/YYYY format and convert to ISO
-    const cleaned = text.replace(/[^\d/]/g, '');
+    // Remove all characters except digits and forward slashes for date input
+    const dateInputPattern = /[^\d/]/g;
+    const cleaned = text.replace(dateInputPattern, '');
     
     // If user types 8 digits, auto-format
     const digitsOnly = cleaned.replace(/\//g, '');
@@ -121,10 +154,14 @@ export default function MovementForm({
       const day = digitsOnly.slice(0, 2);
       const month = digitsOnly.slice(2, 4);
       const year = digitsOnly.slice(4, 8);
-      setDateISO(`${year}-${month}-${day}`);
+      if (isValidDate(day, month, year)) {
+        setDateISO(`${year}-${month}-${day}`);
+      }
     } else if (cleaned.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
       const [day, month, year] = cleaned.split('/');
-      setDateISO(`${year}-${month}-${day}`);
+      if (isValidDate(day, month, year)) {
+        setDateISO(`${year}-${month}-${day}`);
+      }
     } else {
       // Store as-is for intermediate input
       setDateISO(cleaned);
