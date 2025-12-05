@@ -21,10 +21,7 @@ import {
   exchangeCodeForToken,
   getUserInfo,
 } from '../services/googleAuth';
-
-// Note: In production, this should come from environment configuration
-// For development/testing, set this to your Google OAuth client ID
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+import { GOOGLE_CLIENT_ID } from '../config';
 
 export default function LoginScreen({ onLoginSuccess }) {
   const [isLoading, setIsLoading] = useState(false);

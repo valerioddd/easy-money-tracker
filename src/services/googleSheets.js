@@ -4,13 +4,13 @@
  */
 
 import { getAccessToken, isAuthenticated, clearAuthState } from './googleAuth';
+import { MASTER_TEMPLATE_ID } from '../config';
 
 const SHEETS_API_BASE = 'https://sheets.googleapis.com/v4';
 const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 
-// Master template file ID - this should be configured per environment
-// In production, this would come from environment config
-export const MASTER_TEMPLATE_ID = '1A2B3C4D5E6F7G8H9I0J'; // Placeholder - to be configured
+// Re-export for backwards compatibility
+export { MASTER_TEMPLATE_ID };
 
 /**
  * Runtime memory store for selected sheet
