@@ -34,6 +34,8 @@ import {
   findById,
   deleteById,
   batchWrite,
+  batchReadRanges,
+  batchWriteRows,
   type BatchWriteRequest,
 } from './sheetsClient';
 

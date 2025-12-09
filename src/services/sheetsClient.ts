@@ -8,6 +8,7 @@
 import { getAccessToken, isAuthenticated, clearAuthState } from './googleAuth';
 import { getSelectedSheet } from './googleSheets';
 import type { SheetRow } from './models';
+import { withRetry, isRetryableError } from '../utils/retryBackoff';
 
 const SHEETS_API_BASE = 'https://sheets.googleapis.com/v4';
 
@@ -123,7 +124,7 @@ export class SheetsApiError extends Error {
 }
 
 /**
- * Make an authenticated API request to Google Sheets API
+ * Make an authenticated API request to Google Sheets API with retry logic
  * @param url API endpoint URL
  * @param options Fetch options
  * @returns API response
@@ -132,43 +133,53 @@ const authenticatedFetch = async (
   url: string,
   options: RequestInit = {}
 ): Promise<Response> => {
-  await waitForRateLimit();
+  return withRetry(
+    async () => {
+      await waitForRateLimit();
 
-  const accessToken = getAccessToken();
+      const accessToken = getAccessToken();
 
-  if (!accessToken) {
-    throw new SheetsApiError('Not authenticated', 401, 'NOT_AUTHENTICATED');
-  }
+      if (!accessToken) {
+        throw new SheetsApiError('Not authenticated', 401, 'NOT_AUTHENTICATED');
+      }
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          clearAuthState();
+          throw new SheetsApiError('Authentication revoked', 401, 'AUTH_REVOKED');
+        }
+        if (response.status === 404) {
+          throw new SheetsApiError('Resource not found', 404, 'NOT_FOUND');
+        }
+        if (response.status === 429) {
+          throw new SheetsApiError('Rate limit exceeded', 429, 'RATE_LIMITED');
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new SheetsApiError(
+          errorData.error?.message || `API error: ${response.status}`,
+          response.status,
+          'API_ERROR'
+        );
+      }
+
+      return response;
     },
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      clearAuthState();
-      throw new SheetsApiError('Authentication revoked', 401, 'AUTH_REVOKED');
+    {
+      maxRetries: 3,
+      baseDelayMs: 1000,
+      maxDelayMs: 30000,
+      shouldRetry: isRetryableError,
     }
-    if (response.status === 404) {
-      throw new SheetsApiError('Resource not found', 404, 'NOT_FOUND');
-    }
-    if (response.status === 429) {
-      throw new SheetsApiError('Rate limit exceeded', 429, 'RATE_LIMITED');
-    }
-    const errorData = await response.json().catch(() => ({}));
-    throw new SheetsApiError(
-      errorData.error?.message || `API error: ${response.status}`,
-      response.status,
-      'API_ERROR'
-    );
-  }
-
-  return response;
+  );
 };
 
 /**
@@ -458,6 +469,34 @@ export const deleteById = async (
   const range = `${sheetName}!A${existing.rowNumber}`;
   await writeRows(range, [emptyRow], spreadsheetId);
   return true;
+};
+
+/**
+ * Batch read multiple ranges with optimized performance
+ * Alias for batchRead with consistent naming convention
+ * @param ranges Array of A1 notation ranges to read
+ * @param spreadsheetId Optional spreadsheet ID
+ * @returns Map of range to row arrays
+ */
+export const batchReadRanges = async (
+  ranges: string[],
+  spreadsheetId?: string
+): Promise<Map<string, SheetRow[]>> => {
+  return batchRead(ranges, spreadsheetId);
+};
+
+/**
+ * Batch write rows to multiple ranges with optimized performance
+ * Alias for batchWrite with consistent naming convention
+ * @param requests Array of write requests with ranges and rows
+ * @param spreadsheetId Optional spreadsheet ID
+ * @returns Results for each batch request
+ */
+export const batchWriteRows = async (
+  requests: BatchWriteRequest[],
+  spreadsheetId?: string
+): Promise<{ totalUpdatedRows: number; totalUpdatedCells: number }> => {
+  return batchWrite(requests, spreadsheetId);
 };
 
 /**

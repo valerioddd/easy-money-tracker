@@ -4,3 +4,4 @@
  */
 
 export * from './errorDetection';
+export * from './retryBackoff';
