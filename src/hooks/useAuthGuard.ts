@@ -5,7 +5,7 @@
  * Triggers re-login flow when authentication is lost.
  */
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { isAuthenticated, clearAuthState } from '../services/googleAuth';
 import { isAuthError } from '../utils/errorDetection';
 
@@ -55,6 +55,7 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardReturn {
 
   const [authenticated, setAuthenticated] = useState(isAuthenticated());
   const [hasNotifiedRevoked, setHasNotifiedRevoked] = useState(false);
+  const pollingInProgressRef = useRef(false);
 
   /**
    * Check current authentication state
@@ -99,14 +100,25 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardReturn {
     }
 
     const interval = setInterval(() => {
-      const authStatus = checkAuth();
+      // Prevent race condition with multiple polling executions
+      if (pollingInProgressRef.current) {
+        return;
+      }
       
-      // If auth was lost, trigger the revoked callback (only once)
-      if (!authStatus && authenticated && !hasNotifiedRevoked) {
-        setHasNotifiedRevoked(true);
-        if (onAuthRevoked) {
-          onAuthRevoked();
+      pollingInProgressRef.current = true;
+      
+      try {
+        const authStatus = checkAuth();
+        
+        // If auth was lost, trigger the revoked callback (only once)
+        if (!authStatus && authenticated && !hasNotifiedRevoked) {
+          setHasNotifiedRevoked(true);
+          if (onAuthRevoked) {
+            onAuthRevoked();
+          }
         }
+      } finally {
+        pollingInProgressRef.current = false;
       }
     }, pollingInterval);
 

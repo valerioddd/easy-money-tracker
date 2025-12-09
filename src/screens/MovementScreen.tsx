@@ -43,7 +43,7 @@ import {
 import { getCurrentUser } from '../services/googleAuth';
 import { getSelectedSheet, clearSelectedSheet } from '../services/googleSheets';
 import { useAuthGuard, useSheetGuard } from '../hooks';
-import { isHandledByGuard } from '../utils/errorDetection';
+import { isHandledByGuard, isTemplateError } from '../utils/errorDetection';
 
 interface UserInfo {
   email?: string;
@@ -276,12 +276,12 @@ export default function MovementScreen({
       setShowErrorDialog(false);
       await loadData();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create new sheet';
-      if (message.includes('TEMPLATE_NOT_FOUND')) {
+      const error = err instanceof Error ? err : new Error('Failed to create new sheet');
+      if (isTemplateError(error)) {
         setErrorType('template_not_found');
         setErrorDialogMessage('The master template is not available. Please check your configuration.');
       } else {
-        setErrorDialogMessage(message);
+        setErrorDialogMessage(error.message);
       }
     } finally {
       setIsRecovering(false);

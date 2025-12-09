@@ -75,9 +75,12 @@ export function useSheetGuard(options: SheetGuardOptions = {}): SheetGuardReturn
   });
 
   /**
-   * Update sheet info when selected sheet changes
+   * Update sheet info when component mounts or when explicitly checking
+   * Note: This won't track external changes automatically. 
+   * For real-time tracking, components should call verifyAccess() or retryAccess()
+   * after operations that might change the sheet.
    */
-  useEffect(() => {
+  const updateSheetInfo = useCallback(() => {
     const sheet = getSelectedSheet();
     setSheetInfo({
       fileId: sheet.fileId,
@@ -86,9 +89,18 @@ export function useSheetGuard(options: SheetGuardOptions = {}): SheetGuardReturn
   }, []);
 
   /**
+   * Update sheet info on mount
+   */
+  useEffect(() => {
+    updateSheetInfo();
+  }, [updateSheetInfo]);
+
+  /**
    * Verify that the current sheet is accessible
    */
   const verifyAccess = useCallback(async (): Promise<boolean> => {
+    // Update sheet info before verifying
+    updateSheetInfo();
     const sheet = getSelectedSheet();
     
     if (!sheet.fileId) {
@@ -114,7 +126,7 @@ export function useSheetGuard(options: SheetGuardOptions = {}): SheetGuardReturn
       setSheetError(message);
       return false;
     }
-  }, [onSheetNotFound]);
+  }, [onSheetNotFound, updateSheetInfo]);
 
   /**
    * Handle sheet-related errors
@@ -164,7 +176,7 @@ export function useSheetGuard(options: SheetGuardOptions = {}): SheetGuardReturn
       setSheetError(null);
       const newSheet = await duplicateMasterTemplate(undefined, name);
       
-      // Update local state
+      // Update local state with new sheet info
       setSheetInfo({
         fileId: newSheet.id,
         fileName: newSheet.name,

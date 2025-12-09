@@ -5,6 +5,26 @@
  */
 
 /**
+ * Error type constants
+ */
+export const ERROR_CODES = {
+  AUTH_REVOKED: 'AUTH_REVOKED',
+  NOT_AUTHENTICATED: 'Not authenticated',
+  FILE_NOT_FOUND: 'FILE_NOT_FOUND',
+  RESOURCE_NOT_FOUND: 'Resource not found',
+  NO_SHEET_SELECTED: 'No spreadsheet selected',
+  TEMPLATE_NOT_FOUND: 'TEMPLATE_NOT_FOUND',
+} as const;
+
+/**
+ * HTTP status codes for error detection
+ */
+export const HTTP_STATUS = {
+  UNAUTHORIZED: 401,
+  NOT_FOUND: 404,
+} as const;
+
+/**
  * Check if an error is authentication-related
  * @param error - The error to check
  * @returns True if the error is auth-related
@@ -13,10 +33,10 @@ export function isAuthError(error: Error | string): boolean {
   const message = typeof error === 'string' ? error : error.message;
   
   return (
-    message === 'AUTH_REVOKED' ||
-    message === 'Not authenticated' ||
-    message.includes('401') ||
-    message.includes('Authentication revoked')
+    message === ERROR_CODES.AUTH_REVOKED ||
+    message === ERROR_CODES.NOT_AUTHENTICATED ||
+    message.includes(String(HTTP_STATUS.UNAUTHORIZED)) ||
+    message.toLowerCase().includes('authentication revoked')
   );
 }
 
@@ -27,13 +47,16 @@ export function isAuthError(error: Error | string): boolean {
  */
 export function isSheetError(error: Error | string): boolean {
   const message = typeof error === 'string' ? error : error.message;
+  const lowerMessage = message.toLowerCase();
   
   return (
-    message === 'FILE_NOT_FOUND' ||
-    message === 'Resource not found' ||
-    message.includes('404') ||
-    message.includes('not found') ||
-    message.includes('No spreadsheet selected')
+    message === ERROR_CODES.FILE_NOT_FOUND ||
+    message === ERROR_CODES.RESOURCE_NOT_FOUND ||
+    message === ERROR_CODES.NO_SHEET_SELECTED ||
+    message.includes(String(HTTP_STATUS.NOT_FOUND)) ||
+    lowerMessage.includes('not found') ||
+    lowerMessage.includes('deleted') ||
+    lowerMessage.includes('moved')
   );
 }
 
@@ -45,7 +68,7 @@ export function isSheetError(error: Error | string): boolean {
 export function isTemplateError(error: Error | string): boolean {
   const message = typeof error === 'string' ? error : error.message;
   
-  return message.includes('TEMPLATE_NOT_FOUND');
+  return message.includes(ERROR_CODES.TEMPLATE_NOT_FOUND);
 }
 
 /**
