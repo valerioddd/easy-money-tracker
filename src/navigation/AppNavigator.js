@@ -1,12 +1,13 @@
 /**
  * AppNavigator - Main navigation container
- * Handles auth flow and screen navigation
+ * Handles auth flow and bottom tab navigation
  */
 
 import React, { useState, useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { LoginScreen, SheetSelectionScreen, MovementScreen } from '../screens';
+import { LoginScreen, SheetSelectionScreen } from '../screens';
+import BottomTabNavigator from './Navigation';
 import { isAuthenticated, clearAuthState } from '../services/googleAuth';
 import { getSelectedSheet, clearSelectedSheet } from '../services/googleSheets';
 import { colors } from '../theme';
@@ -97,8 +98,7 @@ export default function AppNavigator() {
         ) : (
           <Stack.Screen name={SCREENS.HOME}>
             {(props) => (
-              <MovementScreen
-                {...props}
+              <BottomTabNavigator
                 onChangeSheet={handleChangeSheet}
                 onLogout={handleLogout}
               />
