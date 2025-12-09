@@ -177,13 +177,7 @@ const authenticatedFetch = async (
       maxRetries: 3,
       baseDelayMs: 1000,
       maxDelayMs: 30000,
-      shouldRetry: (error) => {
-        // Don't retry authentication or not found errors
-        if (error instanceof SheetsApiError) {
-          return isRetryableError(error);
-        }
-        return isRetryableError(error);
-      },
+      shouldRetry: isRetryableError,
     }
   );
 };

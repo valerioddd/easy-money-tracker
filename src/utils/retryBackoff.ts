@@ -26,7 +26,8 @@ export const exponentialBackoff = (
   // Add jitter (±25%) to avoid thundering herd
   const jitter = cappedDelay * 0.25 * (Math.random() * 2 - 1);
   
-  return Math.floor(cappedDelay + jitter);
+  // Ensure delay is never negative
+  return Math.max(0, Math.floor(cappedDelay + jitter));
 };
 
 /**
