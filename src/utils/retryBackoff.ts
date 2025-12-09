@@ -117,7 +117,8 @@ export const isRetryableError = (error: any): boolean => {
   }
   
   // HTTP status codes that are retryable
-  if (error.statusCode) {
+  const statusCode = error.statusCode || error.status;
+  if (statusCode) {
     const retryableStatusCodes = [
       408, // Request Timeout
       429, // Too Many Requests (rate limit)
@@ -126,7 +127,7 @@ export const isRetryableError = (error: any): boolean => {
       503, // Service Unavailable
       504, // Gateway Timeout
     ];
-    return retryableStatusCodes.includes(error.statusCode);
+    return retryableStatusCodes.includes(statusCode);
   }
   
   return false;
