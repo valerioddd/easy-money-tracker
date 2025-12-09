@@ -50,7 +50,21 @@ export interface Category {
 }
 
 /**
- * Asset - represents a financial account or asset snapshot
+ * Account - represents a financial account
+ */
+export interface Account {
+  /** Unique identifier (UUID v4) */
+  id: string;
+  /** Display name of the account */
+  name: string;
+  /** Emoji icon for UI display */
+  emoji: string;
+  /** Current balance of the account */
+  balance: number;
+}
+
+/**
+ * Asset - represents a financial account or asset snapshot (for history/charts)
  */
 export interface Asset {
   /** Unique identifier (UUID v4) */
@@ -140,6 +154,20 @@ export const createMovement = (
 export const createCategory = (
   data: Omit<Category, 'id'>
 ): Category => {
+  return {
+    id: generateId(),
+    ...data,
+  };
+};
+
+/**
+ * Create a new Account with generated ID
+ * @param data Partial account data (without id)
+ * @returns Complete Account object with generated ID
+ */
+export const createAccountModel = (
+  data: Omit<Account, 'id'>
+): Account => {
   return {
     id: generateId(),
     ...data,
@@ -267,6 +295,30 @@ export const validateAsset = (asset: Asset): string[] => {
   }
   if (typeof asset.value !== 'number') {
     errors.push('Value must be a number');
+  }
+
+  return errors;
+};
+
+/**
+ * Validate an Account object
+ * @param account The account to validate
+ * @returns Array of validation errors (empty if valid)
+ */
+export const validateAccount = (account: Account): string[] => {
+  const errors: string[] = [];
+
+  if (!account.id) {
+    errors.push('Account ID is required');
+  }
+  if (!account.name || account.name.trim().length === 0) {
+    errors.push('Account name is required');
+  }
+  if (!account.emoji || account.emoji.trim().length === 0) {
+    errors.push('Account emoji is required');
+  }
+  if (typeof account.balance !== 'number') {
+    errors.push('Balance must be a number');
   }
 
   return errors;
