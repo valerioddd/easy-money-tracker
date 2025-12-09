@@ -4,3 +4,4 @@
  */
 
 export { default as AppNavigator, SCREENS } from './AppNavigator';
+export { default as BottomTabNavigator } from './Navigation';

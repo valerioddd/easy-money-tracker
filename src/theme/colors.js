@@ -1,20 +1,21 @@
 /**
  * Dark theme color palette for Easy Money Tracker
- * All UI components should use these colors for consistent theming
+ * White/Black palette with Red/Green accents
  */
 
 export const colors = {
-  // Primary colors
-  primary: '#6C63FF',
-  primaryLight: '#9D97FF',
-  primaryDark: '#4B43CC',
+  // Primary colors - Black and White
+  primary: '#FFFFFF',
+  primaryLight: '#F5F5F5',
+  primaryDark: '#E0E0E0',
 
-  // Background colors
-  background: '#121212',
-  surface: '#1E1E1E',
+  // Background colors - Dark theme
+  background: '#000000',
+  surface: '#1A1A1A',
   surfaceVariant: '#2D2D2D',
 
   // Text colors
+  text: '#FFFFFF', // Alias for textPrimary (backward compatibility)
   textPrimary: '#FFFFFF',
   textSecondary: '#B3B3B3',
   textDisabled: '#666666',
@@ -25,9 +26,9 @@ export const colors = {
   warning: '#FFC107',
   info: '#2196F3',
 
-  // Transaction colors
-  income: '#4CAF50',
-  expense: '#F44336',
+  // Transaction colors - Green for income, Red for expense
+  income: '#00C853',
+  expense: '#FF1744',
 
   // Border and divider
   border: '#333333',

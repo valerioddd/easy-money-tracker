@@ -4,6 +4,8 @@
  */
 
 export { colors } from './colors';
+export { theme } from './Theme';
+export type { Theme, ThemeColors, ThemeSpacing, ThemeTypography, ThemeBorderRadius } from './Theme';
 
 export const spacing = {
   xs: 4,
@@ -20,6 +22,19 @@ export const typography = {
   fontSizeXLarge: 20,
   fontSizeTitle: 24,
   fontSizeHeader: 32,
+  
+  // Backward compatibility - sizes and weights aliases
+  sizes: {
+    sm: 12,
+    md: 14,
+    lg: 16,
+    xl: 20,
+  },
+  weights: {
+    normal: '400' as const,
+    semibold: '600' as const,
+    bold: '700' as const,
+  },
 };
 
 export const borderRadius = {
