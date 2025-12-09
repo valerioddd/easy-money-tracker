@@ -113,13 +113,24 @@ easy-money-tracker/
 ├── index.js            # App registry
 ├── package.json        # Dependencies
 ├── src/
+│   ├── components/     # React components
+│   ├── hooks/          # Custom React hooks
+│   ├── navigation/     # Navigation configuration
+│   ├── screens/        # Screen components
+│   ├── services/       # API services and business logic
 │   └── theme/          # Theme configuration
 │       ├── colors.js   # Dark theme colors
 │       └── index.js    # Theme exports
 ├── docs/
-│   └── template.md     # Google Sheet template documentation
+│   ├── template.md     # Google Sheet template documentation
+│   └── error-handling.md  # Error handling and recovery guide
 └── assets/             # App icons and images
 ```
+
+## Documentation
+
+- **[Template Documentation](./docs/template.md)** - Detailed Google Sheet structure and schema
+- **[Error Handling Guide](./docs/error-handling.md)** - Error recovery flows and implementation guide
 
 ## Theme
 
@@ -200,11 +211,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Roadmap
 
-- [ ] Google Sheets API integration
-- [ ] Google Sign-In authentication
-- [ ] Transaction list screen
-- [ ] Add/edit transaction screens
+- [x] Google Sheets API integration
+- [x] Google Sign-In authentication
+- [x] Transaction list screen
+- [x] Add/edit transaction screens
+- [x] Category management
+- [x] Error handling and recovery flows
 - [ ] Dashboard with charts
-- [ ] Category management
 - [ ] Asset/account management
 - [ ] Data export functionality
