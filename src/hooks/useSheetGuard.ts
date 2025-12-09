@@ -159,14 +159,16 @@ export function useSheetGuard(options: SheetGuardOptions = {}): SheetGuardReturn
     const isAccessible = await verifyAccess();
     
     // Only trigger recovery callback if we had an error and now recovered
-    if (isAccessible && hadError && sheetInfo.fileId && sheetInfo.fileName) {
-      if (onSheetRecovered) {
-        onSheetRecovered(sheetInfo.fileId, sheetInfo.fileName);
+    if (isAccessible && hadError) {
+      // Use fresh data from getSelectedSheet() instead of potentially stale state
+      const freshSheet = getSelectedSheet();
+      if (freshSheet.fileId && freshSheet.fileName && onSheetRecovered) {
+        onSheetRecovered(freshSheet.fileId, freshSheet.fileName);
       }
     }
     
     return isAccessible;
-  }, [verifyAccess, sheetInfo, sheetError, onSheetRecovered]);
+  }, [verifyAccess, sheetError, onSheetRecovered]);
 
   /**
    * Create a new sheet from the master template

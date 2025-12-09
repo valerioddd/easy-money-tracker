@@ -22,7 +22,14 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { colors, spacing, typography, borderRadius } from '../theme';
-import { MovementForm, MovementList, CategoryForm, CategoryList, ErrorRecoveryDialog } from '../components';
+import { 
+  MovementForm, 
+  MovementList, 
+  CategoryForm, 
+  CategoryList, 
+  ErrorRecoveryDialog,
+  type ErrorType 
+} from '../components';
 import type { Movement, Category } from '../services/models';
 import {
   loadCategories,
@@ -83,7 +90,7 @@ export default function MovementScreen({
 
   // Error recovery state
   const [showErrorDialog, setShowErrorDialog] = useState(false);
-  const [errorType, setErrorType] = useState<'auth_revoked' | 'sheet_not_found' | 'template_not_found'>('auth_revoked');
+  const [errorType, setErrorType] = useState<ErrorType>('auth_revoked');
   const [errorDialogMessage, setErrorDialogMessage] = useState<string | undefined>(undefined);
   const [isRecovering, setIsRecovering] = useState(false);
 

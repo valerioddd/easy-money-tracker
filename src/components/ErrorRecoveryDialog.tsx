@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import { colors, spacing, typography, borderRadius } from '../theme';
 
-type ErrorType = 'auth_revoked' | 'sheet_not_found' | 'template_not_found';
+export type ErrorType = 'auth_revoked' | 'sheet_not_found' | 'template_not_found';
 
 interface ErrorRecoveryDialogProps {
   /** Whether the dialog is visible */

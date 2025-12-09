@@ -25,6 +25,8 @@ interface AuthGuardReturn {
   checkAuth: () => boolean;
   /** Handle auth error and trigger revoked flow */
   handleAuthError: (error: Error) => void;
+  /** Reset notification flag (call after successful re-login) */
+  resetNotificationFlag: () => void;
 }
 
 /**
@@ -64,10 +66,9 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardReturn {
     const authStatus = isAuthenticated();
     setAuthenticated(authStatus);
     
-    // Reset notification flag when auth is restored
-    if (authStatus) {
-      setHasNotifiedRevoked(false);
-    }
+    // Note: hasNotifiedRevoked is NOT reset here during periodic checks
+    // It should only be reset when the user explicitly re-authenticates
+    // (which happens when they successfully log in again)
     
     return authStatus;
   }, []);
@@ -125,9 +126,17 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardReturn {
     return () => clearInterval(interval);
   }, [enablePolling, pollingInterval, checkAuth, authenticated, hasNotifiedRevoked, onAuthRevoked]);
 
+  /**
+   * Reset notification flag (useful after successful re-authentication)
+   */
+  const resetNotificationFlag = useCallback(() => {
+    setHasNotifiedRevoked(false);
+  }, []);
+
   return {
     isAuthenticated: authenticated,
     checkAuth,
     handleAuthError,
+    resetNotificationFlag,
   };
 }
