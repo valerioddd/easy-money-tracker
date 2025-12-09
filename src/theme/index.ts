@@ -31,9 +31,9 @@ export const typography = {
     xl: 20,
   },
   weights: {
-    normal: '400' as const,
-    semibold: '600' as const,
-    bold: '700' as const,
+    normal: '400' as '400',
+    semibold: '600' as '600',
+    bold: '700' as '700',
   },
 };
 

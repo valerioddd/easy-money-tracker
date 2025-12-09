@@ -59,9 +59,9 @@ export interface ThemeTypography {
     xl: number;
   };
   weights: {
-    normal: string;
-    semibold: string;
-    bold: string;
+    normal: '400';
+    semibold: '600';
+    bold: '700';
   };
 }
 
@@ -137,9 +137,9 @@ export const theme: Theme = {
       xl: 20,
     },
     weights: {
-      normal: '400',
-      semibold: '600',
-      bold: '700',
+      normal: '400' as '400',
+      semibold: '600' as '600',
+      bold: '700' as '700',
     },
   },
 
