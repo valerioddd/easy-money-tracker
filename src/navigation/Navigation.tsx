@@ -16,27 +16,30 @@ import { colors, typography } from '../theme';
 
 const Tab = createBottomTabNavigator();
 
+// Helper function for tab icon color
+const getIconColor = (focused: boolean) => focused ? colors.income : colors.textSecondary;
+
 // Minimal icon components using Unicode symbols
 const MovementsIcon = ({ focused, size }: { focused: boolean; size: number }) => (
-  <Text style={[styles.icon, { fontSize: size, color: focused ? colors.income : colors.textSecondary }]}>
+  <Text style={[styles.icon, { fontSize: size, color: getIconColor(focused) }]}>
     💸
   </Text>
 );
 
 const AccountsIcon = ({ focused, size }: { focused: boolean; size: number }) => (
-  <Text style={[styles.icon, { fontSize: size, color: focused ? colors.income : colors.textSecondary }]}>
+  <Text style={[styles.icon, { fontSize: size, color: getIconColor(focused) }]}>
     💰
   </Text>
 );
 
 const ChartsIcon = ({ focused, size }: { focused: boolean; size: number }) => (
-  <Text style={[styles.icon, { fontSize: size, color: focused ? colors.income : colors.textSecondary }]}>
+  <Text style={[styles.icon, { fontSize: size, color: getIconColor(focused) }]}>
     📊
   </Text>
 );
 
 const SettingsIcon = ({ focused, size }: { focused: boolean; size: number }) => (
-  <Text style={[styles.icon, { fontSize: size, color: focused ? colors.income : colors.textSecondary }]}>
+  <Text style={[styles.icon, { fontSize: size, color: getIconColor(focused) }]}>
     ⚙️
   </Text>
 );

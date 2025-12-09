@@ -50,6 +50,19 @@ export interface ThemeTypography {
   fontSizeXLarge: number;
   fontSizeTitle: number;
   fontSizeHeader: number;
+  
+  // Backward compatibility - sizes and weights aliases
+  sizes: {
+    sm: number;
+    md: number;
+    lg: number;
+    xl: number;
+  };
+  weights: {
+    normal: string;
+    semibold: string;
+    bold: string;
+  };
 }
 
 export interface ThemeBorderRadius {
@@ -115,6 +128,19 @@ export const theme: Theme = {
     fontSizeXLarge: 20,
     fontSizeTitle: 24,
     fontSizeHeader: 32,
+    
+    // Backward compatibility - sizes and weights aliases
+    sizes: {
+      sm: 12,
+      md: 14,
+      lg: 16,
+      xl: 20,
+    },
+    weights: {
+      normal: '400',
+      semibold: '600',
+      bold: '700',
+    },
   },
 
   borderRadius: {
