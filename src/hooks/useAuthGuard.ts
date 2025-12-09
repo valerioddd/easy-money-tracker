@@ -7,6 +7,7 @@
 
 import { useEffect, useCallback, useState } from 'react';
 import { isAuthenticated, clearAuthState } from '../services/googleAuth';
+import { isAuthError } from '../utils/errorDetection';
 
 interface AuthGuardOptions {
   /** Callback when authentication is revoked */
@@ -53,6 +54,7 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardReturn {
   } = options;
 
   const [authenticated, setAuthenticated] = useState(isAuthenticated());
+  const [hasNotifiedRevoked, setHasNotifiedRevoked] = useState(false);
 
   /**
    * Check current authentication state
@@ -60,6 +62,12 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardReturn {
   const checkAuth = useCallback((): boolean => {
     const authStatus = isAuthenticated();
     setAuthenticated(authStatus);
+    
+    // Reset notification flag when auth is restored
+    if (authStatus) {
+      setHasNotifiedRevoked(false);
+    }
+    
     return authStatus;
   }, []);
 
@@ -68,23 +76,19 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardReturn {
    * Detects AUTH_REVOKED errors and triggers the re-login flow
    */
   const handleAuthError = useCallback((error: Error) => {
-    // Check if error is auth-related
-    if (
-      error.message === 'AUTH_REVOKED' ||
-      error.message === 'Not authenticated' ||
-      error.message.includes('401') ||
-      error.message.includes('Authentication revoked')
-    ) {
+    // Check if error is auth-related using utility function
+    if (isAuthError(error)) {
       // Clear auth state
       clearAuthState();
       setAuthenticated(false);
       
-      // Trigger callback to navigate to login
-      if (onAuthRevoked) {
+      // Trigger callback to navigate to login (only once)
+      if (onAuthRevoked && !hasNotifiedRevoked) {
+        setHasNotifiedRevoked(true);
         onAuthRevoked();
       }
     }
-  }, [onAuthRevoked]);
+  }, [onAuthRevoked, hasNotifiedRevoked]);
 
   /**
    * Periodic auth state check (if enabled)
@@ -97,8 +101,9 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardReturn {
     const interval = setInterval(() => {
       const authStatus = checkAuth();
       
-      // If auth was lost, trigger the revoked callback
-      if (!authStatus && authenticated) {
+      // If auth was lost, trigger the revoked callback (only once)
+      if (!authStatus && authenticated && !hasNotifiedRevoked) {
+        setHasNotifiedRevoked(true);
         if (onAuthRevoked) {
           onAuthRevoked();
         }
@@ -106,7 +111,7 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardReturn {
     }, pollingInterval);
 
     return () => clearInterval(interval);
-  }, [enablePolling, pollingInterval, checkAuth, authenticated, onAuthRevoked]);
+  }, [enablePolling, pollingInterval, checkAuth, authenticated, hasNotifiedRevoked, onAuthRevoked]);
 
   return {
     isAuthenticated: authenticated,

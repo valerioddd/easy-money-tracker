@@ -43,6 +43,7 @@ import {
 import { getCurrentUser } from '../services/googleAuth';
 import { getSelectedSheet, clearSelectedSheet } from '../services/googleSheets';
 import { useAuthGuard, useSheetGuard } from '../hooks';
+import { isHandledByGuard } from '../utils/errorDetection';
 
 interface UserInfo {
   email?: string;
@@ -150,11 +151,7 @@ export default function MovementScreen({
       handleSheetError(error);
       
       // Only show alert if not handled by recovery dialogs
-      if (
-        !errorMessage.includes('AUTH_REVOKED') &&
-        !errorMessage.includes('FILE_NOT_FOUND') &&
-        !errorMessage.includes('not found')
-      ) {
+      if (!isHandledByGuard(error)) {
         Alert.alert('Error', errorMessage);
       }
     } finally {
@@ -191,11 +188,7 @@ export default function MovementScreen({
       handleSheetError(error);
       
       // Only show alert if not handled by recovery dialogs
-      if (
-        !errorMessage.includes('AUTH_REVOKED') &&
-        !errorMessage.includes('FILE_NOT_FOUND') &&
-        !errorMessage.includes('not found')
-      ) {
+      if (!isHandledByGuard(error)) {
         Alert.alert('Error', errorMessage);
       }
     } finally {

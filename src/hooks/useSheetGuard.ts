@@ -5,13 +5,14 @@
  * Provides recovery options when sheet access is lost.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { 
   getSelectedSheet, 
   verifySheetAccess, 
   duplicateMasterTemplate,
   clearSelectedSheet 
 } from '../services/googleSheets';
+import { isSheetError, isTemplateError } from '../utils/errorDetection';
 
 interface SheetGuardOptions {
   /** Callback when sheet is not found or inaccessible */
@@ -74,6 +75,17 @@ export function useSheetGuard(options: SheetGuardOptions = {}): SheetGuardReturn
   });
 
   /**
+   * Update sheet info when selected sheet changes
+   */
+  useEffect(() => {
+    const sheet = getSelectedSheet();
+    setSheetInfo({
+      fileId: sheet.fileId,
+      fileName: sheet.fileName,
+    });
+  }, []);
+
+  /**
    * Verify that the current sheet is accessible
    */
   const verifyAccess = useCallback(async (): Promise<boolean> => {
@@ -110,21 +122,15 @@ export function useSheetGuard(options: SheetGuardOptions = {}): SheetGuardReturn
   const handleSheetError = useCallback((error: Error) => {
     const errorMessage = error.message;
 
-    // Check if error is sheet-related
-    if (
-      errorMessage === 'FILE_NOT_FOUND' ||
-      errorMessage === 'Resource not found' ||
-      errorMessage.includes('404') ||
-      errorMessage.includes('not found') ||
-      errorMessage.includes('No spreadsheet selected')
-    ) {
+    // Check if error is sheet-related using utility functions
+    if (isSheetError(error)) {
       setSheetError('Sheet not found or deleted');
       
       // Trigger callback for sheet not found
       if (onSheetNotFound) {
         onSheetNotFound();
       }
-    } else if (errorMessage.includes('TEMPLATE_NOT_FOUND')) {
+    } else if (isTemplateError(error)) {
       setSheetError('Master template not found');
     } else {
       // Generic sheet error
@@ -136,17 +142,19 @@ export function useSheetGuard(options: SheetGuardOptions = {}): SheetGuardReturn
    * Retry accessing the current sheet
    */
   const retryAccess = useCallback(async (): Promise<boolean> => {
+    const hadError = sheetError !== null;
     setSheetError(null);
     const isAccessible = await verifyAccess();
     
-    if (isAccessible && sheetInfo.fileId && sheetInfo.fileName) {
+    // Only trigger recovery callback if we had an error and now recovered
+    if (isAccessible && hadError && sheetInfo.fileId && sheetInfo.fileName) {
       if (onSheetRecovered) {
         onSheetRecovered(sheetInfo.fileId, sheetInfo.fileName);
       }
     }
     
     return isAccessible;
-  }, [verifyAccess, sheetInfo, onSheetRecovered]);
+  }, [verifyAccess, sheetInfo, sheetError, onSheetRecovered]);
 
   /**
    * Create a new sheet from the master template
