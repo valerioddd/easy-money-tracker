@@ -335,6 +335,13 @@ export const validateMovementData = (data: {
 };
 
 /**
+ * Clear temporary queue (for sheet switching)
+ */
+export const clearQueue = (): void => {
+  state.queue = [];
+};
+
+/**
  * Clear all state (for logout)
  */
 export const clearMovementState = (): void => {

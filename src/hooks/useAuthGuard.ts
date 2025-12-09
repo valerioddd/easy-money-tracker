@@ -1,0 +1,142 @@
+/**
+ * useAuthGuard Hook
+ * 
+ * Monitors authentication state and handles revoked permissions.
+ * Triggers re-login flow when authentication is lost.
+ */
+
+import { useEffect, useCallback, useState, useRef } from 'react';
+import { isAuthenticated, clearAuthState } from '../services/googleAuth';
+import { isAuthError } from '../utils/errorDetection';
+
+interface AuthGuardOptions {
+  /** Callback when authentication is revoked */
+  onAuthRevoked?: () => void;
+  /** Enable polling for auth state changes (default: false) */
+  enablePolling?: boolean;
+  /** Polling interval in milliseconds (default: 30000) */
+  pollingInterval?: number;
+}
+
+interface AuthGuardReturn {
+  /** Whether user is currently authenticated */
+  isAuthenticated: boolean;
+  /** Manually trigger auth check */
+  checkAuth: () => boolean;
+  /** Handle auth error and trigger revoked flow */
+  handleAuthError: (error: Error) => void;
+  /** Reset notification flag (call after successful re-login) */
+  resetNotificationFlag: () => void;
+}
+
+/**
+ * Custom hook for guarding against authentication failures
+ * 
+ * @param options - Configuration options
+ * @returns Auth guard state and handlers
+ * 
+ * @example
+ * ```tsx
+ * const { isAuthenticated, handleAuthError } = useAuthGuard({
+ *   onAuthRevoked: () => navigation.navigate('Login')
+ * });
+ * 
+ * try {
+ *   await someApiCall();
+ * } catch (error) {
+ *   handleAuthError(error);
+ * }
+ * ```
+ */
+export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardReturn {
+  const {
+    onAuthRevoked,
+    enablePolling = false,
+    pollingInterval = 30000,
+  } = options;
+
+  const [authenticated, setAuthenticated] = useState(isAuthenticated());
+  const [hasNotifiedRevoked, setHasNotifiedRevoked] = useState(false);
+  const pollingInProgressRef = useRef(false);
+
+  /**
+   * Check current authentication state
+   */
+  const checkAuth = useCallback((): boolean => {
+    const authStatus = isAuthenticated();
+    setAuthenticated(authStatus);
+    
+    // Note: hasNotifiedRevoked is NOT reset here during periodic checks
+    // It should only be reset when the user explicitly re-authenticates
+    // (which happens when they successfully log in again)
+    
+    return authStatus;
+  }, []);
+
+  /**
+   * Handle authentication errors
+   * Detects AUTH_REVOKED errors and triggers the re-login flow
+   */
+  const handleAuthError = useCallback((error: Error) => {
+    // Check if error is auth-related using utility function
+    if (isAuthError(error)) {
+      // Clear auth state
+      clearAuthState();
+      setAuthenticated(false);
+      
+      // Trigger callback to navigate to login (only once)
+      if (onAuthRevoked && !hasNotifiedRevoked) {
+        setHasNotifiedRevoked(true);
+        onAuthRevoked();
+      }
+    }
+  }, [onAuthRevoked, hasNotifiedRevoked]);
+
+  /**
+   * Periodic auth state check (if enabled)
+   */
+  useEffect(() => {
+    if (!enablePolling) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      // Prevent race condition with multiple polling executions
+      if (pollingInProgressRef.current) {
+        return;
+      }
+      
+      pollingInProgressRef.current = true;
+      
+      try {
+        const authStatus = checkAuth();
+        
+        // If auth was lost, trigger the revoked callback (only once)
+        if (!authStatus && authenticated && !hasNotifiedRevoked) {
+          setHasNotifiedRevoked(true);
+          if (onAuthRevoked) {
+            onAuthRevoked();
+          }
+        }
+      } finally {
+        pollingInProgressRef.current = false;
+      }
+    }, pollingInterval);
+
+    return () => clearInterval(interval);
+  }, [enablePolling, pollingInterval, checkAuth, authenticated, hasNotifiedRevoked, onAuthRevoked]);
+
+  /**
+   * Reset notification flag (useful after successful re-authentication)
+   */
+  const resetNotificationFlag = useCallback(() => {
+    setHasNotifiedRevoked(false);
+  }, []);
+
+  return {
+    isAuthenticated: authenticated,
+    checkAuth,
+    handleAuthError,
+    resetNotificationFlag,
+  };
+}

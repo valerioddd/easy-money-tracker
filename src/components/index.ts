@@ -10,3 +10,5 @@ export { default as CategoryList } from './CategoryList';
 export { default as AccountForm } from './AccountForm';
 export { default as AccountList } from './AccountList';
 export { default as NetWorthHeader } from './NetWorthHeader';
+export { default as ErrorRecoveryDialog } from './ErrorRecoveryDialog';
+export type { ErrorType } from './ErrorRecoveryDialog';
