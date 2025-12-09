@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { colors, spacing, typography, borderRadius } from '../theme';
-import { MovementForm, MovementList, CategoryForm, CategoryList } from '../components';
+import { MovementForm, MovementList, CategoryForm, CategoryList, ErrorRecoveryDialog } from '../components';
 import type { Movement, Category } from '../services/models';
 import {
   loadCategories,
@@ -38,9 +38,11 @@ import {
   updateCategory,
   createCategoryRecord,
   deleteCategory,
+  clearQueue,
 } from '../services/movementService';
 import { getCurrentUser } from '../services/googleAuth';
 import { getSelectedSheet, clearSelectedSheet } from '../services/googleSheets';
+import { useAuthGuard, useSheetGuard } from '../hooks';
 
 interface UserInfo {
   email?: string;
@@ -78,8 +80,34 @@ export default function MovementScreen({
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
+  // Error recovery state
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [errorType, setErrorType] = useState<'auth_revoked' | 'sheet_not_found' | 'template_not_found'>('auth_revoked');
+  const [errorDialogMessage, setErrorDialogMessage] = useState<string | undefined>(undefined);
+  const [isRecovering, setIsRecovering] = useState(false);
+
   const user = getCurrentUser() as UserInfo | null;
   const selectedSheet = getSelectedSheet() as SelectedSheet;
+
+  // Auth guard hook
+  const { handleAuthError } = useAuthGuard({
+    onAuthRevoked: () => {
+      setErrorType('auth_revoked');
+      setShowErrorDialog(true);
+    },
+  });
+
+  // Sheet guard hook
+  const { handleSheetError, retryAccess, createNewSheet } = useSheetGuard({
+    onSheetNotFound: () => {
+      setErrorType('sheet_not_found');
+      setShowErrorDialog(true);
+    },
+    onSheetRecovered: () => {
+      setShowErrorDialog(false);
+      loadData();
+    },
+  });
 
   // Load data on mount
   useEffect(() => {
@@ -113,9 +141,22 @@ export default function MovementScreen({
         await processQueue();
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
+      const error = err instanceof Error ? err : new Error('Failed to load data');
+      const errorMessage = error.message;
       setError(errorMessage);
-      Alert.alert('Error', errorMessage);
+      
+      // Handle specific error types
+      handleAuthError(error);
+      handleSheetError(error);
+      
+      // Only show alert if not handled by recovery dialogs
+      if (
+        !errorMessage.includes('AUTH_REVOKED') &&
+        !errorMessage.includes('FILE_NOT_FOUND') &&
+        !errorMessage.includes('not found')
+      ) {
+        Alert.alert('Error', errorMessage);
+      }
     } finally {
       setIsLoading(false);
       setSyncStatus(getServiceState());
@@ -142,8 +183,21 @@ export default function MovementScreen({
       setShowForm(false);
       setEditingMovement(null);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to save movement';
-      Alert.alert('Error', errorMessage);
+      const error = err instanceof Error ? err : new Error('Failed to save movement');
+      const errorMessage = error.message;
+      
+      // Handle specific error types
+      handleAuthError(error);
+      handleSheetError(error);
+      
+      // Only show alert if not handled by recovery dialogs
+      if (
+        !errorMessage.includes('AUTH_REVOKED') &&
+        !errorMessage.includes('FILE_NOT_FOUND') &&
+        !errorMessage.includes('not found')
+      ) {
+        Alert.alert('Error', errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
       setSyncStatus(getServiceState());
@@ -182,6 +236,8 @@ export default function MovementScreen({
 
   // Handle sheet change
   const handleChangeSheet = () => {
+    // Clear queue on sheet switching
+    clearQueue();
     clearMovementState();
     clearSelectedSheet();
     if (onChangeSheet) {
@@ -195,6 +251,53 @@ export default function MovementScreen({
     if (onLogout) {
       onLogout();
     }
+  };
+
+  // Error recovery handlers
+  const handleReLogin = () => {
+    setShowErrorDialog(false);
+    handleLogout();
+  };
+
+  const handleRetrySheet = async () => {
+    setIsRecovering(true);
+    try {
+      const success = await retryAccess();
+      if (success) {
+        setShowErrorDialog(false);
+        await loadData();
+      } else {
+        setErrorDialogMessage('Sheet is still not accessible. Please try creating a new one.');
+      }
+    } catch (err) {
+      setErrorDialogMessage('Failed to access sheet. Please try again.');
+    } finally {
+      setIsRecovering(false);
+    }
+  };
+
+  const handleCreateNewSheet = async () => {
+    setIsRecovering(true);
+    try {
+      await createNewSheet();
+      setShowErrorDialog(false);
+      await loadData();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create new sheet';
+      if (message.includes('TEMPLATE_NOT_FOUND')) {
+        setErrorType('template_not_found');
+        setErrorDialogMessage('The master template is not available. Please check your configuration.');
+      } else {
+        setErrorDialogMessage(message);
+      }
+    } finally {
+      setIsRecovering(false);
+    }
+  };
+
+  const handleDismissErrorDialog = () => {
+    setShowErrorDialog(false);
+    setErrorDialogMessage(undefined);
   };
 
   // Category management handlers
@@ -462,6 +565,18 @@ export default function MovementScreen({
           </Modal>
         </View>
       </Modal>
+
+      {/* Error Recovery Dialog */}
+      <ErrorRecoveryDialog
+        visible={showErrorDialog}
+        errorType={errorType}
+        errorMessage={errorDialogMessage}
+        isLoading={isRecovering}
+        onRetry={handleRetrySheet}
+        onCreateNew={handleCreateNewSheet}
+        onReLogin={handleReLogin}
+        onCancel={handleDismissErrorDialog}
+      />
     </View>
   );
 }
